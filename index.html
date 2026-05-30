@@ -47,6 +47,11 @@
                 <span class="play-icon">▶</span> Let's Play!
             </button>
 
+            <div class="sticker-book" id="stickerBook" style="display:none;">
+                <p class="picker-label">My Sticker Book</p>
+                <div class="sticker-row" id="stickerRow"></div>
+            </div>
+
             <button class="sound-toggle" id="soundToggle" aria-label="Toggle sound">🔊</button>
         </section>
 
@@ -71,6 +76,8 @@
             <div class="card-grid" id="cardGrid"><!-- cards injected --></div>
         </section>
 
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
+
         <!-- ============ WIN SCREEN ============ -->
         <section class="screen win-screen" id="winScreen">
             <div class="win-mascot" id="winMascot">🦊</div>
@@ -78,6 +85,18 @@
             <div class="medal">🏅</div>
             <p class="win-sub" id="winSub">You found everything!</p>
             <div class="win-stars" id="winStars"></div>
+
+            <div class="reward-sticker" id="rewardSticker" style="display:none;">
+                <p class="reward-label">New sticker!</p>
+                <div class="reward-emoji" id="rewardEmoji">🦊</div>
+            </div>
+
+            <div class="scrapbook" id="scrapbook" style="display:none;">
+                <p class="picker-label">My Photo Scrapbook</p>
+                <div class="scrap-grid" id="scrapGrid"></div>
+                <button class="text-btn" id="shareBtn">📤 Share my photos</button>
+            </div>
+
             <button class="big-play-btn" id="playAgainBtn">
                 <span class="play-icon">↻</span> Play Again
             </button>
