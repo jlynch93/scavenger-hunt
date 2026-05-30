@@ -13,37 +13,18 @@ python -m http.server 8000
 # open http://localhost:8000
 ```
 
-## Deploy to Cloudflare Pages
+## Deploy to Cloudflare Pages (Wrangler)
 
-### Option A — Connect GitHub repo (recommended)
-
-1. Push this repo to GitHub (see below).
-2. Go to **Cloudflare Dashboard → Workers & Pages → Create → Pages → Connect to Git**.
-3. Select your repo.
-4. Build settings:
-   - **Framework preset:** None
-   - **Build command:** *(leave empty)*
-   - **Build output directory:** `/`
-5. Click **Save and Deploy**. Every push to `main` will auto-deploy.
-
-### Option B — Direct deploy via Wrangler CLI
+Config lives in `wrangler.toml` (`pages_build_output_dir = "."`).
 
 ```bash
 npm install -g wrangler
 wrangler login
-wrangler pages deploy . --project-name=scavenger-hunt
+wrangler pages deploy .
 ```
 
-### Option C — GitHub Actions (automated)
-
-A workflow is included at `.github/workflows/deploy.yml`. To enable it:
-
-1. Get your Cloudflare **Account ID** (Dashboard sidebar) and create an **API Token** with the `Cloudflare Pages — Edit` template.
-2. In your GitHub repo: **Settings → Secrets and variables → Actions → New repository secret**:
-   - `CLOUDFLARE_API_TOKEN`
-   - `CLOUDFLARE_ACCOUNT_ID`
-3. Create a Pages project named `scavenger-hunt` in the Cloudflare dashboard (one-time).
-4. Push to `main` — the workflow deploys automatically.
+First run will offer to create the `scavenger-hunt` Pages project. Re-run the
+`deploy` command any time to push a new version.
 
 ## Push to GitHub
 
