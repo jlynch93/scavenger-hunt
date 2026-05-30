@@ -1,498 +1,308 @@
-class ScavengerHuntGenerator {
-    constructor() {
-        this.items = {
-            indoor: [
-                "Find something that starts with the letter 'B'",
-                "Locate a red object in the room",
-                "Find something that makes noise",
-                "Discover an item with wheels",
-                "Find something that reflects light",
-                "Locate something soft and fluffy",
-                "Find an object with numbers on it",
-                "Discover something that can be opened and closed",
-                "Find something that smells good",
-                "Locate an item that is taller than you",
-                "Find something with a pattern",
-                "Discover an object that is round",
-                "Find something that is battery powered",
-                "Locate something that folds",
-                "Find an item with buttons"
-            ],
-            outdoor: [
-                "Find a leaf with interesting colors",
-                "Locate something that grows",
-                "Find a rock with unique features",
-                "Discover something that moves in the wind",
-                "Find something that makes shadows",
-                "Locate an insect or bug",
-                "Find something that is natural",
-                "Discover a flower",
-                "Find something that is rough",
-                "Locate something that is smooth",
-                "Find a stick that looks like something else",
-                "Discover something that is green",
-                "Find something that is brown",
-                "Locate something that is crunchy",
-                "Find something that is soft"
-            ],
-            nature: [
-                "Find a pinecone",
-                "Locate a bird feather",
-                "Find an interesting seed pod",
-                "Discover animal tracks",
-                "Find a mushroom or fungus",
-                "Locate a piece of bark",
-                "Find a nest",
-                "Discover a spider web",
-                "Find something that shows signs of decay",
-                "Locate something that shows signs of growth",
-                "Find a fossil or impression",
-                "Discover something that lives in water",
-                "Find something that protects itself",
-                "Locate something that spreads",
-                "Find something that climbs"
-            ],
-            urban: [
-                "Find a street sign",
-                "Locate a fire hydrant",
-                "Find graffiti or street art",
-                "Discover a unique door",
-                "Find something made of brick",
-                "Locate a bicycle",
-                "Find a security camera",
-                "Discover a mailbox",
-                "Find something made of glass",
-                "Locate a traffic light",
-                "Find a bench",
-                "Discover a manhole cover",
-                "Find something with graffiti",
-                "Locate a poster or flyer",
-                "Find something that lights up"
-            ],
-            home: [
-                "Find something in the kitchen that starts with 'S'",
-                "Locate a family photo",
-                "Find something that keeps you warm",
-                "Discover a book you haven't read",
-                "Find something that tells time",
-                "Locate something that holds liquid",
-                "Find something that plugs into the wall",
-                "Discover something that hangs on the wall",
-                "Find something that is usually hidden",
-                "Locate something that is older than you",
-                "Find something that is newer than you",
-                "Discover something that makes music",
-                "Find something that is broken",
-                "Locate something that needs fixing",
-                "Find something that is handmade"
-            ],
-            school: [
-                "Find a textbook",
-                "Locate something with the school mascot",
-                "Find a locker",
-                "Discover something written in chalk",
-                "Find a pencil",
-                "Locate something that is blue",
-                "Find a map",
-                "Discover something that measures",
-                "Find something that is sharp",
-                "Locate something that is sticky",
-                "Find a ruler",
-                "Discover something that is magnetic",
-                "Find something that folds",
-                "Locate something that is transparent",
-                "Find something that is recyclable"
-            ]
-        };
+// ===== Critter Quest - kid-friendly scavenger hunt =====
 
-        this.currentHunt = [];
-        this.completedItems = new Set();
-        this.timer = null;
-        this.timeRemaining = 0;
-        this.isPaused = false;
+const THEMES = {
+    home: {
+        name: 'My House', emoji: '🏠', mascot: '🐶',
+        items: [
+            ['🪑', 'Chair'], ['📚', 'Book'], ['🥄', 'Spoon'], ['🧸', 'Teddy'],
+            ['🧦', 'Sock'], ['🕐', 'Clock'], ['🍴', 'Fork'], ['🪥', 'Toothbrush'],
+            ['🛏️', 'Bed'], ['🧴', 'Soap'], ['🖍️', 'Crayon'], ['🪞', 'Mirror'],
+            ['🧺', 'Basket'], ['🔑', 'Key'], ['💡', 'Lamp'], ['🪟', 'Window'],
+        ],
+    },
+    outside: {
+        name: 'Outside', emoji: '🌳', mascot: '🐿️',
+        items: [
+            ['🌳', 'Tree'], ['🌸', 'Flower'], ['🪨', 'Rock'], ['🍃', 'Leaf'],
+            ['🐦', 'Bird'], ['🐛', 'Bug'], ['☁️', 'Cloud'], ['🌼', 'Daisy'],
+            ['🦋', 'Butterfly'], ['🐜', 'Ant'], ['🌱', 'Sprout'], ['🪵', 'Stick'],
+            ['🐝', 'Bee'], ['🕸️', 'Web'], ['🍄', 'Mushroom'], ['🐌', 'Snail'],
+        ],
+    },
+    park: {
+        name: 'The Park', emoji: '🛝', mascot: '🦆',
+        items: [
+            ['🛝', 'Slide'], ['🌳', 'Tree'], ['🐕', 'Dog'], ['⚽', 'Ball'],
+            ['🪁', 'Kite'], ['🦆', 'Duck'], ['🚲', 'Bike'], ['🌷', 'Tulip'],
+            ['🪑', 'Bench'], ['🐿️', 'Squirrel'], ['🏀', 'Hoop'], ['🌊', 'Pond'],
+            ['🍦', 'Ice cream'], ['🐦', 'Bird'], ['🌞', 'Sun'], ['🧺', 'Picnic'],
+        ],
+    },
+    colors: {
+        name: 'Colors', emoji: '🌈', mascot: '🦄',
+        items: [
+            ['🔴', 'Red'], ['🟠', 'Orange'], ['🟡', 'Yellow'], ['🟢', 'Green'],
+            ['🔵', 'Blue'], ['🟣', 'Purple'], ['🟤', 'Brown'], ['⚫', 'Black'],
+            ['⚪', 'White'], ['🌸', 'Pink'], ['🩵', 'Sky blue'], ['🟩', 'Lime'],
+        ],
+    },
+    farm: {
+        name: 'The Farm', emoji: '🚜', mascot: '🐄',
+        items: [
+            ['🐄', 'Cow'], ['🐖', 'Pig'], ['🐑', 'Sheep'], ['🐔', 'Chicken'],
+            ['🐴', 'Horse'], ['🦆', 'Duck'], ['🚜', 'Tractor'], ['🌽', 'Corn'],
+            ['🥚', 'Egg'], ['🐐', 'Goat'], ['🐱', 'Cat'], ['🌾', 'Hay'],
+            ['🐰', 'Bunny'], ['🦃', 'Turkey'], ['🥕', 'Carrot'], ['🍎', 'Apple'],
+        ],
+    },
+    ocean: {
+        name: 'The Sea', emoji: '🌊', mascot: '🐠',
+        items: [
+            ['🐠', 'Fish'], ['🐙', 'Octopus'], ['🦀', 'Crab'], ['🐚', 'Shell'],
+            ['⭐', 'Starfish'], ['🐬', 'Dolphin'], ['🐳', 'Whale'], ['🦈', 'Shark'],
+            ['🐢', 'Turtle'], ['🦞', 'Lobster'], ['🪸', 'Coral'], ['🐡', 'Pufferfish'],
+            ['🦭', 'Seal'], ['🐧', 'Penguin'], ['🌊', 'Wave'], ['⛵', 'Boat'],
+        ],
+    },
+};
 
-        this.initializeEventListeners();
+const PRAISE = ['Yay!', 'Great job!', 'You found it!', 'Awesome!', 'Wow!', 'Super!', 'Nice!', 'Woohoo!'];
+const CONFETTI_COLORS = ['#ff5ca8', '#ffd23f', '#3ddc84', '#29b6f6', '#7c4dff', '#ff9f43'];
+
+const state = {
+    theme: 'home',
+    count: 8,
+    items: [],
+    found: new Set(),
+    stars: 0,
+    sound: true,
+};
+
+let audioCtx = null;
+
+// ---------- Helpers ----------
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+function showScreen(id) {
+    $$('.screen').forEach((s) => s.classList.remove('active'));
+    $('#' + id).classList.add('active');
+}
+
+function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
     }
+    return a;
+}
 
-    initializeEventListeners() {
-        document.getElementById('generateBtn').addEventListener('click', () => this.generateHunt());
-        document.getElementById('startTimerBtn').addEventListener('click', () => this.startTimer());
-        document.getElementById('pauseTimerBtn').addEventListener('click', () => this.pauseTimer());
-        document.getElementById('resetBtn').addEventListener('click', () => this.resetHunt());
-        document.getElementById('newHuntBtn').addEventListener('click', () => this.generateHunt());
-    }
+function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-    generateHunt() {
-        const category = document.getElementById('category').value;
-        const difficulty = document.getElementById('difficulty').value;
-        const itemCount = parseInt(document.getElementById('itemCount').value);
-        const timeLimit = parseInt(document.getElementById('timeLimit').value);
+// ---------- Sound ----------
+function tone(freq, dur = 0.12, type = 'sine', vol = 0.25) {
+    if (!state.sound) return;
+    try {
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+        osc.start();
+        osc.stop(audioCtx.currentTime + dur);
+    } catch (e) { /* ignore */ }
+}
 
-        this.currentHunt = this.getRandomItems(category, itemCount, difficulty);
-        this.completedItems.clear();
-        this.timeRemaining = timeLimit * 60;
-        this.isPaused = false;
+function happyChime() {
+    [523, 659, 784].forEach((f, i) => setTimeout(() => tone(f, 0.15, 'triangle'), i * 90));
+}
 
-        this.displayHunt(category, difficulty, timeLimit);
-        this.updateStats();
-    }
+function winFanfare() {
+    [523, 587, 659, 784, 880, 1047].forEach((f, i) => setTimeout(() => tone(f, 0.22, 'triangle'), i * 130));
+}
 
-    getRandomItems(category, count, difficulty) {
-        let availableItems = [];
-        
-        if (category === 'all') {
-            Object.values(this.items).forEach(categoryItems => {
-                availableItems = availableItems.concat(categoryItems);
-            });
-        } else {
-            availableItems = [...this.items[category]];
-        }
+function speak(text) {
+    if (!state.sound || !('speechSynthesis' in window)) return;
+    try {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 0.9; u.pitch = 1.3; u.volume = 1;
+        window.speechSynthesis.speak(u);
+    } catch (e) { /* ignore */ }
+}
 
-        // Apply difficulty modifications
-        const modifiedItems = availableItems.map(item => this.applyDifficulty(item, difficulty));
-        
-        // Shuffle and select items
-        const shuffled = modifiedItems.sort(() => Math.random() - 0.5);
-        return shuffled.slice(0, Math.min(count, shuffled.length)).map((item, index) => ({
-            id: index + 1,
-            text: item.text,
-            points: item.points,
-            hint: item.hint
-        }));
-    }
-
-    applyDifficulty(item, difficulty) {
-        let points = 10;
-        let hint = '';
-
-        switch (difficulty) {
-            case 'easy':
-                points = 10;
-                hint = 'Look around carefully!';
-                break;
-            case 'medium':
-                points = 20;
-                hint = 'Think outside the box!';
-                break;
-            case 'hard':
-                points = 30;
-                hint = 'This might take some creativity!';
-                break;
-        }
-
-        return { text: item, points, hint };
-    }
-
-    displayHunt(category, difficulty, timeLimit) {
-        const huntDisplay = document.getElementById('huntDisplay');
-        const stats = document.getElementById('stats');
-        const itemsList = document.getElementById('itemsList');
-        const categoryBadge = document.getElementById('categoryBadge');
-        const difficultyBadge = document.getElementById('difficultyBadge');
-        const timeDisplay = document.getElementById('timeRemaining');
-
-        huntDisplay.style.display = 'block';
-        stats.style.display = 'block';
-
-        categoryBadge.textContent = category === 'all' ? 'Mixed' : category;
-        categoryBadge.className = 'category-badge';
-        
-        difficultyBadge.textContent = difficulty;
-        difficultyBadge.className = `difficulty-badge ${difficulty}`;
-
-        this.updateTimerDisplay(timeLimit);
-
-        itemsList.innerHTML = '';
-        this.currentHunt.forEach(item => {
-            const itemElement = this.createItemElement(item);
-            itemsList.appendChild(itemElement);
+// ---------- Build home ----------
+function buildThemeGrid() {
+    const grid = $('#themeGrid');
+    grid.innerHTML = '';
+    Object.entries(THEMES).forEach(([key, t]) => {
+        const card = document.createElement('button');
+        card.className = 'theme-card' + (key === state.theme ? ' selected' : '');
+        card.dataset.theme = key;
+        card.innerHTML = `<span class="emoji">${t.emoji}</span><span class="name">${t.name}</span>`;
+        card.addEventListener('click', () => {
+            state.theme = key;
+            $$('.theme-card').forEach((c) => c.classList.remove('selected'));
+            card.classList.add('selected');
+            tone(660, 0.08, 'square', 0.15);
+            const t2 = THEMES[key];
+            $('#homeMascot').textContent = t2.mascot;
+            $('#homeSpeech').textContent = `Let's explore ${t2.name}!`;
+            speak(t2.name);
         });
+        grid.appendChild(card);
+    });
+}
 
-        // Reset timer display
-        document.getElementById('startTimerBtn').style.display = 'inline-flex';
-        document.getElementById('pauseTimerBtn').style.display = 'none';
-    }
+// ---------- Start hunt ----------
+function startHunt() {
+    const theme = THEMES[state.theme];
+    const picks = shuffle(theme.items).slice(0, Math.min(state.count, theme.items.length));
+    state.items = picks.map(([emoji, name], i) => ({ id: i, emoji, name }));
+    state.found = new Set();
+    state.stars = 0;
 
-    createItemElement(item) {
-        const div = document.createElement('div');
-        div.className = 'hunt-item';
-        div.dataset.itemId = item.id;
-        
-        div.innerHTML = `
-            <div class="item-checkbox">
-                <i class="fas fa-check"></i>
-            </div>
-            <div class="item-content">
-                <div class="item-number">Item ${item.id}</div>
-                <div class="item-text">${item.text}</div>
-            </div>
-            <div class="item-points">${item.points} pts</div>
+    $('#starCount').textContent = '0';
+    $('#trackCritter').textContent = theme.mascot;
+    $('#huntInstruction').textContent = 'Tap a picture when you find it!';
+    updateTrack();
+    buildCards();
+    showScreen('huntScreen');
+    happyChime();
+    speak('Find ' + theme.name);
+}
+
+function buildCards() {
+    const grid = $('#cardGrid');
+    grid.innerHTML = '';
+    state.items.forEach((item) => {
+        const card = document.createElement('div');
+        card.className = 'find-card';
+        card.dataset.id = item.id;
+        card.innerHTML = `
+            <button class="say-btn" aria-label="Say ${item.name}">🔊</button>
+            <span class="card-emoji">${item.emoji}</span>
+            <span class="card-name">${item.name}</span>
+            <span class="check-stamp">✅</span>
         `;
-
-        div.addEventListener('click', () => this.toggleItem(item.id));
-        
-        return div;
-    }
-
-    toggleItem(itemId) {
-        const itemElement = document.querySelector(`[data-item-id="${itemId}"]`);
-        
-        if (this.completedItems.has(itemId)) {
-            this.completedItems.delete(itemId);
-            itemElement.classList.remove('completed');
-        } else {
-            this.completedItems.add(itemId);
-            itemElement.classList.add('completed');
-            this.playCompletionSound();
-        }
-
-        this.updateStats();
-        this.checkCompletion();
-    }
-
-    playCompletionSound() {
-        // Create a simple completion sound using Web Audio API
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = 800;
-        oscillator.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.1);
-    }
-
-    updateStats() {
-        const completedCount = this.completedItems.size;
-        const totalCount = this.currentHunt.length;
-        const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-
-        document.getElementById('completedCount').textContent = completedCount;
-        document.getElementById('totalCount').textContent = totalCount;
-        document.getElementById('progressPercent').textContent = progressPercent;
-
-        const progressFill = document.getElementById('progressFill');
-        progressFill.style.width = `${progressPercent}%`;
-    }
-
-    checkCompletion() {
-        if (this.completedItems.size === this.currentHunt.length && this.currentHunt.length > 0) {
-            this.stopTimer();
-            this.showCompletionMessage();
-        }
-    }
-
-    showCompletionMessage() {
-        const totalPoints = this.currentHunt.reduce((sum, item) => {
-            return sum + (this.completedItems.has(item.id) ? item.points : 0);
-        }, 0);
-
-        const message = document.createElement('div');
-        message.className = 'completion-message';
-        message.innerHTML = `
-            <h3>🎉 Congratulations! 🎉</h3>
-            <p>You completed the scavenger hunt!</p>
-            <p>Total Points: ${totalPoints}</p>
-            <p>Time: ${this.formatTime(Math.abs(this.timeRemaining - (parseInt(document.getElementById('timeLimit').value) * 60)))}</p>
-        `;
-
-        const itemsList = document.getElementById('itemsList');
-        itemsList.appendChild(message);
-
-        // Add celebration animation
-        this.celebrate();
-    }
-
-    celebrate() {
-        // Create confetti effect
-        for (let i = 0; i < 50; i++) {
-            setTimeout(() => {
-                const confetti = document.createElement('div');
-                confetti.className = 'confetti';
-                confetti.style.left = Math.random() * 100 + '%';
-                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 70%, 50%)`;
-                confetti.style.animationDelay = Math.random() * 0.5 + 's';
-                document.body.appendChild(confetti);
-                
-                setTimeout(() => confetti.remove(), 3000);
-            }, i * 30);
-        }
-    }
-
-    startTimer() {
-        if (this.timer) return;
-
-        document.getElementById('startTimerBtn').style.display = 'none';
-        document.getElementById('pauseTimerBtn').style.display = 'inline-flex';
-
-        this.timer = setInterval(() => {
-            if (!this.isPaused) {
-                this.timeRemaining--;
-                this.updateTimerDisplay(this.timeRemaining);
-
-                if (this.timeRemaining <= 0) {
-                    this.stopTimer();
-                    this.showTimeUpMessage();
-                }
-            }
-        }, 1000);
-    }
-
-    pauseTimer() {
-        this.isPaused = !this.isPaused;
-        const pauseBtn = document.getElementById('pauseTimerBtn');
-        
-        if (this.isPaused) {
-            pauseBtn.innerHTML = '<i class="fas fa-play"></i> Resume';
-        } else {
-            pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
-        }
-    }
-
-    stopTimer() {
-        if (this.timer) {
-            clearInterval(this.timer);
-            this.timer = null;
-        }
-        
-        document.getElementById('startTimerBtn').style.display = 'inline-flex';
-        document.getElementById('pauseTimerBtn').style.display = 'none';
-    }
-
-    resetHunt() {
-        this.stopTimer();
-        this.completedItems.clear();
-        this.timeRemaining = parseInt(document.getElementById('timeLimit').value) * 60;
-        this.isPaused = false;
-
-        document.querySelectorAll('.hunt-item').forEach(item => {
-            item.classList.remove('completed');
+        card.addEventListener('click', (e) => {
+            if (e.target.closest('.say-btn')) return;
+            collect(item, card);
         });
+        card.querySelector('.say-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            tone(720, 0.06, 'square', 0.12);
+            speak(item.name);
+        });
+        grid.appendChild(card);
+    });
+}
 
-        this.updateStats();
-        this.updateTimerDisplay(this.timeRemaining);
-
-        // Remove completion message if exists
-        const completionMessage = document.querySelector('.completion-message');
-        if (completionMessage) {
-            completionMessage.remove();
-        }
+function collect(item, card) {
+    if (state.found.has(item.id)) {
+        // tapping again un-finds (in case of mistake)
+        state.found.delete(item.id);
+        card.classList.remove('found');
+        updateStars();
+        updateTrack();
+        tone(300, 0.1, 'sine', 0.15);
+        return;
     }
+    state.found.add(item.id);
+    card.classList.add('found', 'pop');
+    setTimeout(() => card.classList.remove('pop'), 460);
+    updateStars();
+    updateTrack();
+    happyChime();
+    burstConfetti(14);
+    speak(rand(PRAISE));
 
-    updateTimerDisplay(seconds) {
-        const minutes = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        const display = `${minutes}:${secs.toString().padStart(2, '0')}`;
-        document.getElementById('timeRemaining').textContent = display;
-
-        // Add warning class when time is running low
-        if (seconds <= 60 && seconds > 0) {
-            document.getElementById('timer').classList.add('warning');
-        } else {
-            document.getElementById('timer').classList.remove('warning');
-        }
-    }
-
-    showTimeUpMessage() {
-        const message = document.createElement('div');
-        message.className = 'time-up-message';
-        message.innerHTML = `
-            <h3>⏰ Time's Up! ⏰</h3>
-            <p>You found ${this.completedItems.size} out of ${this.currentHunt.length} items!</p>
-            <p>Great effort! Try again?</p>
-        `;
-
-        const itemsList = document.getElementById('itemsList');
-        itemsList.appendChild(message);
-    }
-
-    formatTime(seconds) {
-        const minutes = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    if (state.found.size === state.items.length) {
+        setTimeout(win, 700);
     }
 }
 
-// Add CSS for dynamic elements
-const additionalCSS = `
-.completion-message {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 30px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    border-radius: 12px;
-    margin-top: 20px;
-    animation: fadeIn 0.5s ease-in;
+function updateStars() {
+    state.stars = state.found.size;
+    $('#starCount').textContent = state.stars;
 }
 
-.completion-message h3 {
-    font-size: 2rem;
-    margin-bottom: 15px;
+function updateTrack() {
+    const pct = state.items.length ? (state.found.size / state.items.length) * 100 : 0;
+    $('#trackFill').style.width = pct + '%';
+    $('#trackCritter').style.left = pct + '%';
 }
 
-.time-up-message {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 30px;
-    background: linear-gradient(135deg, #fc8181, #f56565);
-    color: white;
-    border-radius: 12px;
-    margin-top: 20px;
-    animation: fadeIn 0.5s ease-in;
+// ---------- Win ----------
+function win() {
+    const theme = THEMES[state.theme];
+    $('#winMascot').textContent = theme.mascot;
+    $('#winSub').textContent = `You found all ${state.items.length} things!`;
+    $('#winStars').textContent = '⭐'.repeat(Math.min(state.items.length, 12));
+    showScreen('winScreen');
+    winFanfare();
+    speak('Hooray! You did it!');
+    confettiStorm();
 }
 
-.time-up-message h3 {
-    font-size: 2rem;
-    margin-bottom: 15px;
+// ---------- Confetti ----------
+function makePiece(x, fromTop) {
+    const layer = $('#confettiLayer');
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = x + 'vw';
+    p.style.background = rand(CONFETTI_COLORS);
+    p.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    const dur = 1.6 + Math.random() * 1.4;
+    p.style.animationDuration = dur + 's';
+    if (fromTop) p.style.top = '-20px';
+    layer.appendChild(p);
+    setTimeout(() => p.remove(), dur * 1000 + 200);
 }
 
-.confetti {
-    position: fixed;
-    width: 10px;
-    height: 10px;
-    background: #ffd700;
-    border-radius: 50%;
-    pointer-events: none;
-    animation: confettiFall 3s linear forwards;
-    z-index: 9999;
+function burstConfetti(n) {
+    for (let i = 0; i < n; i++) makePiece(Math.random() * 100, true);
 }
 
-@keyframes confettiFall {
-    to {
-        transform: translateY(100vh) rotate(360deg);
-        opacity: 0;
-    }
+function confettiStorm() {
+    let i = 0;
+    const t = setInterval(() => {
+        burstConfetti(10);
+        if (++i > 12) clearInterval(t);
+    }, 200);
 }
 
-.timer.warning {
-    background: var(--danger-color) !important;
-    animation: pulse 1s infinite;
+// ---------- Sound toggle ----------
+function setSound(on) {
+    state.sound = on;
+    const icon = on ? '🔊' : '🔇';
+    $('#soundToggle').textContent = icon;
+    $('#huntSoundToggle').textContent = icon;
+    $('#soundToggle').classList.toggle('muted', !on);
+    $('#huntSoundToggle').classList.toggle('muted', !on);
+    if (!on && 'speechSynthesis' in window) window.speechSynthesis.cancel();
 }
 
-@keyframes pulse {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.05);
-    }
+// ---------- Wire up ----------
+function init() {
+    buildThemeGrid();
+
+    $$('.count-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            state.count = parseInt(btn.dataset.count, 10);
+            $$('.count-btn').forEach((b) => b.classList.remove('active'));
+            btn.classList.add('active');
+            tone(560, 0.08, 'square', 0.15);
+        });
+    });
+
+    $('#startBtn').addEventListener('click', startHunt);
+    $('#backBtn').addEventListener('click', () => { showScreen('homeScreen'); tone(330, 0.1); });
+    $('#playAgainBtn').addEventListener('click', startHunt);
+    $('#homeFromWinBtn').addEventListener('click', () => showScreen('homeScreen'));
+
+    $('#soundToggle').addEventListener('click', () => setSound(!state.sound));
+    $('#huntSoundToggle').addEventListener('click', () => setSound(!state.sound));
+
+    // Prime speech voices on first interaction (mobile)
+    document.body.addEventListener('pointerdown', function prime() {
+        if ('speechSynthesis' in window) window.speechSynthesis.getVoices();
+        document.body.removeEventListener('pointerdown', prime);
+    }, { once: true });
 }
-`;
 
-// Inject additional CSS
-const styleSheet = document.createElement('style');
-styleSheet.textContent = additionalCSS;
-document.head.appendChild(styleSheet);
-
-// Initialize the app
-document.addEventListener('DOMContentLoaded', () => {
-    new ScavengerHuntGenerator();
-});
+document.addEventListener('DOMContentLoaded', init);

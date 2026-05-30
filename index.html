@@ -2,113 +2,90 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Random Scavenger Hunt Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#7c4dff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Critter Quest! Scavenger Hunt for Kids</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦊</text></svg>">
 </head>
 <body>
-    <div class="container">
-        <header class="header">
-            <h1><i class="fas fa-search"></i> Random Scavenger Hunt</h1>
-            <p>Generate exciting scavenger hunts instantly!</p>
-        </header>
-
-        <main class="main-content">
-            <section class="controls">
-                <div class="control-group">
-                    <label for="category">Category:</label>
-                    <select id="category">
-                        <option value="all">All Categories</option>
-                        <option value="indoor">Indoor</option>
-                        <option value="outdoor">Outdoor</option>
-                        <option value="nature">Nature</option>
-                        <option value="urban">Urban</option>
-                        <option value="home">Home</option>
-                        <option value="school">School</option>
-                    </select>
-                </div>
-
-                <div class="control-group">
-                    <label for="difficulty">Difficulty:</label>
-                    <select id="difficulty">
-                        <option value="easy">Easy</option>
-                        <option value="medium">Medium</option>
-                        <option value="hard">Hard</option>
-                    </select>
-                </div>
-
-                <div class="control-group">
-                    <label for="itemCount">Number of Items:</label>
-                    <input type="number" id="itemCount" min="3" max="20" value="8">
-                </div>
-
-                <div class="control-group">
-                    <label for="timeLimit">Time Limit (minutes):</label>
-                    <input type="number" id="timeLimit" min="5" max="120" value="30">
-                </div>
-
-                <button id="generateBtn" class="generate-btn">
-                    <i class="fas fa-dice"></i> Generate Hunt
-                </button>
-            </section>
-
-            <section class="hunt-display" id="huntDisplay" style="display: none;">
-                <div class="hunt-header">
-                    <h2>Your Scavenger Hunt</h2>
-                    <div class="hunt-info">
-                        <span class="category-badge" id="categoryBadge"></span>
-                        <span class="difficulty-badge" id="difficultyBadge"></span>
-                        <span class="timer" id="timer"><i class="fas fa-clock"></i> <span id="timeRemaining">30:00</span></span>
-                    </div>
-                </div>
-
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
-                </div>
-
-                <div class="items-list" id="itemsList"></div>
-
-                <div class="hunt-actions">
-                    <button id="startTimerBtn" class="action-btn start-btn">
-                        <i class="fas fa-play"></i> Start Timer
-                    </button>
-                    <button id="pauseTimerBtn" class="action-btn pause-btn" style="display: none;">
-                        <i class="fas fa-pause"></i> Pause
-                    </button>
-                    <button id="resetBtn" class="action-btn reset-btn">
-                        <i class="fas fa-redo"></i> Reset
-                    </button>
-                    <button id="newHuntBtn" class="action-btn new-hunt-btn">
-                        <i class="fas fa-plus"></i> New Hunt
-                    </button>
-                </div>
-            </section>
-
-            <section class="stats" id="stats" style="display: none;">
-                <h3>Statistics</h3>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <i class="fas fa-check-circle"></i>
-                        <span>Completed: <span id="completedCount">0</span></span>
-                    </div>
-                    <div class="stat-item">
-                        <i class="fas fa-list"></i>
-                        <span>Total: <span id="totalCount">0</span></span>
-                    </div>
-                    <div class="stat-item">
-                        <i class="fas fa-percentage"></i>
-                        <span>Progress: <span id="progressPercent">0</span>%</span>
-                    </div>
-                </div>
-            </section>
-        </main>
-
-        <footer class="footer">
-            <p>Created with <i class="fas fa-heart"></i> for adventure seekers!</p>
-        </footer>
+    <div class="sky">
+        <div class="cloud cloud-1">☁️</div>
+        <div class="cloud cloud-2">☁️</div>
+        <div class="cloud cloud-3">☁️</div>
+        <div class="sun">☀️</div>
     </div>
+
+    <div id="app">
+        <!-- ============ HOME SCREEN ============ -->
+        <section class="screen home-screen active" id="homeScreen">
+            <div class="mascot-bubble">
+                <div class="mascot" id="homeMascot">🦊</div>
+                <p class="speech" id="homeSpeech">Hi friend! Let's go on a treasure hunt!</p>
+            </div>
+
+            <h1 class="game-title">Critter Quest!</h1>
+
+            <div class="picker">
+                <p class="picker-label">Pick a place to explore</p>
+                <div class="theme-grid" id="themeGrid"><!-- themes injected --></div>
+            </div>
+
+            <div class="picker">
+                <p class="picker-label">How many things?</p>
+                <div class="count-row" id="countRow">
+                    <button class="count-btn" data-count="5">5</button>
+                    <button class="count-btn active" data-count="8">8</button>
+                    <button class="count-btn" data-count="12">12</button>
+                </div>
+            </div>
+
+            <button class="big-play-btn" id="startBtn">
+                <span class="play-icon">▶</span> Let's Play!
+            </button>
+
+            <button class="sound-toggle" id="soundToggle" aria-label="Toggle sound">🔊</button>
+        </section>
+
+        <!-- ============ HUNT SCREEN ============ -->
+        <section class="screen hunt-screen" id="huntScreen">
+            <header class="hunt-top">
+                <button class="icon-btn" id="backBtn" aria-label="Go back">⬅️</button>
+                <div class="star-counter">
+                    <span class="star-big">⭐</span>
+                    <span id="starCount">0</span>
+                </div>
+                <button class="icon-btn" id="huntSoundToggle" aria-label="Toggle sound">🔊</button>
+            </header>
+
+            <div class="track">
+                <div class="track-fill" id="trackFill"></div>
+                <div class="track-critter" id="trackCritter">🐾</div>
+            </div>
+
+            <p class="hunt-instruction" id="huntInstruction">Tap a picture when you find it!</p>
+
+            <div class="card-grid" id="cardGrid"><!-- cards injected --></div>
+        </section>
+
+        <!-- ============ WIN SCREEN ============ -->
+        <section class="screen win-screen" id="winScreen">
+            <div class="win-mascot" id="winMascot">🦊</div>
+            <h2 class="win-title">You did it!</h2>
+            <div class="medal">🏅</div>
+            <p class="win-sub" id="winSub">You found everything!</p>
+            <div class="win-stars" id="winStars"></div>
+            <button class="big-play-btn" id="playAgainBtn">
+                <span class="play-icon">↻</span> Play Again
+            </button>
+            <button class="text-btn" id="homeFromWinBtn">🏠 Back Home</button>
+        </section>
+    </div>
+
+    <div class="confetti-layer" id="confettiLayer"></div>
 
     <script src="script.js"></script>
 </body>

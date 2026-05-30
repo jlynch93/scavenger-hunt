@@ -1,6 +1,15 @@
-# Random Scavenger Hunt Generator
+# Critter Quest — Scavenger Hunt for Kids
 
-A fully interactive scavenger hunt generator with random items, difficulty levels, timer, and progress tracking. Pure HTML/CSS/JS — no build step required.
+A colorful, mobile-first scavenger hunt game for little kids. Pick a place (House, Outside, Park, Colors, Farm, Sea), then tap big emoji cards as you find each thing in real life. Features read-aloud item names (great for pre-readers), sound effects, confetti, a star counter, and a friendly critter mascot. Pure HTML/CSS/JS — no build step required.
+
+## Features
+
+- **Mobile-first** with large touch targets and no zoom jitter
+- **Read-aloud** item names via the Web Speech API (tap the 🔊 on any card)
+- **Six themed worlds** with random items each round
+- **Fun feedback**: chimes, spoken praise, confetti, and a progress critter
+- **Star rewards** and a celebration win screen
+- **Sound toggle** for quiet play
 
 ## Live Demo
 
