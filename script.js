@@ -787,14 +787,33 @@ function renderStickerBook() {
     const earned = loadStickers();
     const book = $('#stickerBook');
     const row = $('#stickerRow');
-    if (!earned.length) { book.style.display = 'none'; return; }
+    const goal = 24;
+    const visible = earned.slice(-goal);
+    const progress = Math.min(visible.length, goal);
+    const pct = (progress / goal) * 100;
+
+    $('#stickerCountBadge').textContent = `${progress}/${goal}`;
+    $('#stickerProgressFill').style.width = pct + '%';
+    $('#stickerBookSub').textContent = progress
+        ? `Nice collection! ${goal - progress} more spots to fill.`
+        : 'Finish hunts to unlock surprise stickers.';
+
     row.innerHTML = '';
-    earned.slice(-24).forEach((s) => {
+    visible.forEach((s, i) => {
         const span = document.createElement('span');
         span.className = 'sticker';
         span.textContent = s;
+        span.style.setProperty('--sticker-delay', (i * 0.025) + 's');
         row.appendChild(span);
     });
+
+    for (let i = progress; i < goal; i++) {
+        const slot = document.createElement('span');
+        slot.className = 'sticker locked';
+        slot.textContent = '?';
+        row.appendChild(slot);
+    }
+
     book.style.display = 'block';
 }
 

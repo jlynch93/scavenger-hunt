@@ -41,12 +41,27 @@
                 <div class="stat-pill"><span class="stat-emoji">🎟️</span><span id="statStickers">0</span><span class="stat-label">stickers</span></div>
             </div>
 
-            <div class="picker">
-                <p class="picker-label">Pick a place to explore</p>
+            <div class="sticker-book" id="stickerBook">
+                <div class="sticker-book-head">
+                    <div>
+                        <p class="eyebrow">Collection</p>
+                        <h2>Sticker Book</h2>
+                    </div>
+                    <div class="sticker-count-badge" id="stickerCountBadge">0/24</div>
+                </div>
+                <div class="sticker-progress">
+                    <div class="sticker-progress-fill" id="stickerProgressFill"></div>
+                </div>
+                <p class="sticker-book-sub" id="stickerBookSub">Finish hunts to unlock surprise stickers.</p>
+                <div class="sticker-row" id="stickerRow"></div>
+            </div>
+
+            <div class="picker world-picker">
+                <p class="picker-label">Choose your adventure</p>
                 <div class="theme-grid" id="themeGrid"><!-- themes injected --></div>
             </div>
 
-            <div class="picker">
+            <div class="picker compact-picker">
                 <p class="picker-label">How many things?</p>
                 <div class="count-row" id="countRow">
                     <button class="count-btn" data-count="5">5</button>
@@ -58,11 +73,6 @@
             <button class="big-play-btn" id="startBtn">
                 <span class="play-icon">▶</span> Let's Play!
             </button>
-
-            <div class="sticker-book" id="stickerBook" style="display:none;">
-                <p class="picker-label">My Sticker Book</p>
-                <div class="sticker-row" id="stickerRow"></div>
-            </div>
 
             <button class="sound-toggle" id="soundToggle" aria-label="Toggle sound">🔊</button>
         </section>
