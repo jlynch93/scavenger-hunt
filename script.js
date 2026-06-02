@@ -143,11 +143,45 @@ const PRAISE = ['Yay!', 'Great job!', 'You found it!', 'Awesome!', 'Wow!', 'Supe
 const CONFETTI_COLORS = ['#ff5ca8', '#ffd23f', '#3ddc84', '#29b6f6', '#7c4dff', '#ff9f43'];
 const RAINBOW = ['#ff3b3b', '#ff9f43', '#ffd23f', '#3ddc84', '#29b6f6', '#7c4dff', '#ff5ca8'];
 
-// Stickers a kid can earn and keep in their sticker book
-const STICKERS = ['🦊', '🐰', '🐢', '🦉', '🐝', '🦋', '🐞', '🐸', '🐧', '🦄', '🐱', '🐶', '🐼', '🦁', '🐯', '🐵', '🐙', '🐟', '🦜', '🐛'];
+// Collectible stickers with names + rarity tiers ("gotta find 'em all!")
+const STICKER_SET = [
+    // Common critters
+    { id: 'fox', e: '🦊', n: 'Finn the Fox', r: 'common' },
+    { id: 'bunny', e: '🐰', n: 'Hops', r: 'common' },
+    { id: 'turtle', e: '🐢', n: 'Shelldon', r: 'common' },
+    { id: 'owl', e: '🦉', n: 'Professor Hoot', r: 'common' },
+    { id: 'bee', e: '🐝', n: 'Buzzy', r: 'common' },
+    { id: 'butterfly', e: '🦋', n: 'Flutter', r: 'common' },
+    { id: 'ladybug', e: '🐞', n: 'Dot', r: 'common' },
+    { id: 'frog', e: '🐸', n: 'Hopkins', r: 'common' },
+    { id: 'penguin', e: '🐧', n: 'Waddles', r: 'common' },
+    { id: 'cat', e: '🐱', n: 'Whiskers', r: 'common' },
+    { id: 'dog', e: '🐶', n: 'Patch', r: 'common' },
+    { id: 'panda', e: '🐼', n: 'Bamboo', r: 'common' },
+    { id: 'duck', e: '🦆', n: 'Quackers', r: 'common' },
+    { id: 'hedgehog', e: '🦔', n: 'Prickles', r: 'common' },
+    // Rare critters
+    { id: 'unicorn', e: '�', n: 'Sparkle', r: 'rare' },
+    { id: 'lion', e: '�', n: 'King Roar', r: 'rare' },
+    { id: 'tiger', e: '🐯', n: 'Stripes', r: 'rare' },
+    { id: 'octopus', e: '�', n: 'Inky', r: 'rare' },
+    { id: 'parrot', e: '🦜', n: 'Rio', r: 'rare' },
+    { id: 'whale', e: '�', n: 'Splash', r: 'rare' },
+    { id: 'koala', e: '🐨', n: 'Snuggle', r: 'rare' },
+    // Legendary critters
+    { id: 'dragon', e: '�', n: 'Emberwing', r: 'legendary' },
+    { id: 'robot', e: '�', n: 'Gizmo', r: 'legendary' },
+    { id: 'alien', e: '�', n: 'Zorp', r: 'legendary' },
+];
+const RARITY = {
+    common: { label: 'Common', weight: 70, stars: 1 },
+    rare: { label: 'Rare', weight: 25, stars: 1 },
+    legendary: { label: 'Legendary', weight: 5, stars: 1 },
+};
 const STICKER_KEY = 'critterQuestStickers';
 const PREF_KEY = 'critterQuestPrefs';
 const STATS_KEY = 'critterQuestStats';
+const DAILY_KEY = 'critterQuestDaily';
 
 // Random "Quest Twists" — each round randomly gets one to keep things fresh
 const QUEST_TWISTS = [
@@ -198,6 +232,7 @@ const state = {
     found: new Set(),
     stars: 0,
     sound: true,
+    music: true,
     pendingPhotoId: null,
     haptics: true,
     twist: 'classic',
@@ -208,6 +243,8 @@ const state = {
     lastMilestone: 0,
     mascot: '🐶',
     popTimer: null,
+    daily: false,
+    lastStickerId: null,
 };
 
 let audioCtx = null;
@@ -299,8 +336,10 @@ function savePrefs(prefs) {
 
 // ---------- Lifetime stats ----------
 function loadStats() {
-    try { return JSON.parse(localStorage.getItem(STATS_KEY)) || { hunts: 0, stars: 0 }; }
-    catch (e) { return { hunts: 0, stars: 0 }; }
+    try {
+        const s = JSON.parse(localStorage.getItem(STATS_KEY)) || {};
+        return { hunts: s.hunts || 0, stars: s.stars || 0, best: s.best || 0 };
+    } catch (e) { return { hunts: 0, stars: 0, best: 0 }; }
 }
 function saveStats(stats) {
     try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch (e) { /* ignore */ }
@@ -309,11 +348,14 @@ function recordWin(stars) {
     const stats = loadStats();
     stats.hunts += 1;
     stats.stars += stars;
+    const isRecord = stars > stats.best;
+    if (isRecord) stats.best = stars;
     saveStats(stats);
+    return { isRecord, best: stats.best };
 }
 function renderStats() {
     const stats = loadStats();
-    const stickers = loadStickers().length;
+    const stickers = uniqueStickerCount();
     const strip = $('#statStrip');
     if (!strip) return;
     if (!stats.hunts && !stats.stars && !stickers) { strip.style.display = 'none'; return; }
@@ -340,12 +382,24 @@ function tone(freq, dur = 0.12, type = 'sine', vol = 0.25) {
     } catch (e) { /* ignore */ }
 }
 
+// A few different cheerful "found it" jingles, chosen at random for variety
+const CHIMES = [
+    [523, 659, 784],
+    [587, 740, 880],
+    [659, 784, 988],
+    [523, 784, 1047],
+    [440, 554, 659, 880],
+];
 function happyChime() {
-    [523, 659, 784].forEach((f, i) => setTimeout(() => tone(f, 0.15, 'triangle'), i * 90));
+    rand(CHIMES).forEach((f, i) => setTimeout(() => tone(f, 0.15, 'triangle'), i * 80));
 }
 
 function winFanfare() {
-    [523, 587, 659, 784, 880, 1047].forEach((f, i) => setTimeout(() => tone(f, 0.22, 'triangle'), i * 130));
+    [523, 587, 659, 784, 880, 1047, 1175, 1319].forEach((f, i) => setTimeout(() => tone(f, 0.22, 'triangle'), i * 120));
+}
+
+function sparkleSound() {
+    [988, 1319, 1568, 2093].forEach((f, i) => setTimeout(() => tone(f, 0.12, 'sine', 0.16), i * 70));
 }
 
 function speak(text) {
@@ -356,6 +410,160 @@ function speak(text) {
         u.rate = 0.9; u.pitch = 1.3; u.volume = 1;
         window.speechSynthesis.speak(u);
     } catch (e) { /* ignore */ }
+}
+
+// ---------- Background music (gentle looping melody) ----------
+let musicTimer = null;
+let musicStep = 0;
+const MELODY = [523, 587, 659, 784, 659, 587, 523, 392, 440, 523, 659, 587];
+function softNote(freq, dur = 0.4) {
+    if (!state.music) return;
+    try {
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.06, audioCtx.currentTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+        osc.start();
+        osc.stop(audioCtx.currentTime + dur);
+    } catch (e) { /* ignore */ }
+}
+function startMusic() {
+    if (!state.music || musicTimer) return;
+    try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { /* ignore */ }
+    musicTimer = setInterval(() => {
+        softNote(MELODY[musicStep % MELODY.length]);
+        if (musicStep % 4 === 0) softNote(MELODY[musicStep % MELODY.length] / 2, 0.6);
+        musicStep++;
+    }, 500);
+}
+function stopMusic() {
+    clearInterval(musicTimer);
+    musicTimer = null;
+}
+
+// ---------- Daily Quest + streak ----------
+function todayStr(d = new Date()) {
+    return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+}
+function yesterdayStr() {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return todayStr(d);
+}
+function hashStr(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) { h = (h * 31 + str.charCodeAt(i)) >>> 0; }
+    return h;
+}
+function loadDaily() {
+    try {
+        const d = JSON.parse(localStorage.getItem(DAILY_KEY)) || {};
+        return { lastCompleted: d.lastCompleted || null, streak: d.streak || 0 };
+    } catch (e) { return { lastCompleted: null, streak: 0 }; }
+}
+function saveDaily(d) {
+    try { localStorage.setItem(DAILY_KEY, JSON.stringify(d)); } catch (e) { /* ignore */ }
+}
+// Deterministic config so everyone gets the same quest on a given day
+function dailyConfig() {
+    const seed = hashStr('cq-' + todayStr());
+    const themeKeys = Object.keys(THEMES).filter((k) => !THEMES[k].special);
+    const counts = [5, 8, 12];
+    const theme = themeKeys[seed % themeKeys.length];
+    const count = counts[(seed >> 3) % counts.length];
+    const twist = QUEST_TWISTS[(seed >> 5) % QUEST_TWISTS.length];
+    return { theme, count, twist };
+}
+function isDailyDoneToday() {
+    return loadDaily().lastCompleted === todayStr();
+}
+function markDailyComplete() {
+    const d = loadDaily();
+    const today = todayStr();
+    if (d.lastCompleted === today) return d.streak; // already counted today
+    d.streak = d.lastCompleted === yesterdayStr() ? d.streak + 1 : 1;
+    d.lastCompleted = today;
+    saveDaily(d);
+    return d.streak;
+}
+function renderDailyCard() {
+    const cfg = dailyConfig();
+    const d = loadDaily();
+    const theme = THEMES[cfg.theme];
+    const done = isDailyDoneToday();
+    const emojiEl = $('#dailyEmoji');
+    const subEl = $('#dailySub');
+    const streakWrap = $('#dailyStreak');
+    if (!emojiEl) return;
+    emojiEl.textContent = theme.emoji;
+    subEl.textContent = done
+        ? 'Done today! Come back tomorrow 🌙'
+        : `${theme.name} • ${cfg.twist.name}`;
+    $('#dailyBtn').classList.toggle('done', done);
+    if (d.streak > 0) {
+        streakWrap.style.display = 'flex';
+        $('#streakNum').textContent = d.streak;
+    } else {
+        streakWrap.style.display = 'none';
+    }
+}
+function startDailyQuest() {
+    const cfg = dailyConfig();
+    startHunt({ theme: cfg.theme, count: cfg.count, twist: cfg.twist, daily: true });
+}
+
+// ---------- Onboarding (pre-reader friendly) ----------
+const ONBOARD_STEPS = [
+    ['🦊', "Hi! I'm Finn!", "Let's go on a treasure hunt together!"],
+    ['👀', 'Find real things!', 'I show you a picture. You find it in real life!'],
+    ['👆', 'Tap when you find it!', 'Tap the picture and earn a shiny star.'],
+    ['🎟️', 'Collect critters!', 'Finish hunts to win surprise stickers!'],
+];
+let onboardIdx = 0;
+function showOnboardStep() {
+    const [emoji, title, text] = ONBOARD_STEPS[onboardIdx];
+    $('#onboardMascot').textContent = emoji;
+    $('#onboardTitle').textContent = title;
+    $('#onboardText').textContent = text;
+    const dots = $('#onboardDots');
+    dots.innerHTML = '';
+    ONBOARD_STEPS.forEach((_, i) => {
+        const dot = document.createElement('span');
+        dot.className = 'onboard-dot' + (i === onboardIdx ? ' active' : '');
+        dots.appendChild(dot);
+    });
+    $('#onboardNext').querySelector('span').textContent =
+        onboardIdx === ONBOARD_STEPS.length - 1 ? "Let's Play!" : 'Next';
+    speak(`${title}. ${text}`);
+    tone(660, 0.08, 'triangle', 0.14);
+}
+function nextOnboard() {
+    if (onboardIdx < ONBOARD_STEPS.length - 1) {
+        onboardIdx++;
+        showOnboardStep();
+    } else {
+        finishOnboarding();
+    }
+}
+function finishOnboarding() {
+    $('#onboardLayer').classList.remove('active');
+    const prefs = loadPrefs();
+    prefs.onboarded = true;
+    savePrefs(prefs);
+    if (state.music) startMusic();
+    burstConfetti(20);
+}
+function maybeShowOnboarding() {
+    const prefs = loadPrefs();
+    if (prefs.onboarded) return;
+    onboardIdx = 0;
+    $('#onboardLayer').classList.add('active');
+    showOnboardStep();
 }
 
 // ---------- Build home ----------
@@ -385,7 +593,13 @@ function buildThemeGrid() {
 }
 
 // ---------- Start hunt ----------
-function startHunt() {
+// opts (optional) lets the Daily Quest force a fixed theme/count/twist
+function startHunt(opts = {}) {
+    const isOpts = opts && typeof opts === 'object' && !opts.type && opts.theme;
+    if (isOpts && opts.theme) state.theme = opts.theme;
+    if (isOpts && opts.count) state.count = opts.count;
+    state.daily = !!(isOpts && opts.daily);
+
     const theme = THEMES[state.theme];
     const pool = themeItems(state.theme);
     const picks = shuffle(pool).slice(0, Math.min(state.count, pool.length));
@@ -394,8 +608,8 @@ function startHunt() {
         golden: false, rainbow: false, mystery: false,
     }));
 
-    // Pick a fresh random twist and pick a random mascot for the round
-    const twist = pickTwist();
+    // Pick a twist (forced for daily, otherwise a fresh random one) + random mascot
+    const twist = (isOpts && opts.twist) ? opts.twist : pickTwist();
     state.twist = twist.id;
     state.starMult = twist.id === 'double' ? 2 : 1;
     state.mascot = themeMascot(theme);
@@ -410,19 +624,45 @@ function startHunt() {
     state.lastMilestone = 0;
 
     $('#starCount').textContent = '0';
-    $('#trackCritter').textContent = state.mascot;
     $('#huntInstruction').textContent = state.twist === 'mystery'
         ? 'Tap a card when you spot its secret thing!'
         : 'Tap it, or use 📸 for photo proof!';
-    updateTrack();
+    buildPath();
     buildCards();
     showScreen('huntScreen');
-    setGuide('Ready, explorer?', `Start with any card, or tap 🎲 for a silly bonus mission.`, state.mascot, true);
+    const intro = state.daily ? "Today's special quest! " : '';
+    setGuide('Ready, explorer?', `${intro}Start with any card, or tap 🎲 for a silly bonus mission.`, state.mascot, true);
     showTwistBanner(twist);
     happyChime();
     buzz(20);
     requestWakeLock();
+    if (state.music) startMusic();
     scheduleCritterPop();
+}
+
+// ---------- Stepping-stone adventure map ----------
+function buildPath() {
+    const path = $('#path');
+    if (!path) return;
+    path.innerHTML = '';
+    state.items.forEach((it, i) => {
+        const stone = document.createElement('div');
+        stone.className = 'stone';
+        stone.dataset.index = i;
+        stone.textContent = (i + 1);
+        path.appendChild(stone);
+    });
+    const goal = document.createElement('div');
+    goal.className = 'stone goal';
+    goal.textContent = '🏆';
+    path.appendChild(goal);
+
+    const m = document.createElement('div');
+    m.className = 'path-mascot';
+    m.id = 'pathMascot';
+    m.textContent = state.mascot;
+    path.appendChild(m);
+    updateTrack();
 }
 
 // Apply special item types based on the chosen twist
@@ -699,9 +939,27 @@ function updateStars() {
 }
 
 function updateTrack() {
-    const pct = state.items.length ? (state.found.size / state.items.length) * 100 : 0;
-    $('#trackFill').style.width = pct + '%';
-    $('#trackCritter').style.left = pct + '%';
+    const path = $('#path');
+    if (!path) return;
+    const found = state.found.size;
+    const stones = path.querySelectorAll('.stone');
+    stones.forEach((s, i) => {
+        const isGoal = s.classList.contains('goal');
+        const lit = isGoal ? found >= state.items.length : i < found;
+        s.classList.toggle('lit', lit);
+    });
+    // Hop the mascot onto the current stone
+    const idx = Math.min(found, stones.length - 1);
+    const target = stones[idx];
+    const m = $('#pathMascot');
+    if (target && m) {
+        m.style.left = (target.offsetLeft + target.offsetWidth / 2) + 'px';
+        m.style.top = target.offsetTop + 'px';
+        m.classList.remove('hop');
+        void m.offsetWidth;
+        m.classList.add('hop');
+        target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
 }
 
 // ---------- Win ----------
@@ -709,18 +967,46 @@ function win() {
     clearTimeout(state.popTimer);
     $$('.critter-pop').forEach((c) => c.remove());
     releaseWakeLock();
-    recordWin(state.stars);
+    const record = recordWin(state.stars);
     buzz([30, 50, 30, 50, 30, 50, 120]);
     $('#winMascot').textContent = state.mascot;
     $('#winSub').textContent = `You found all ${state.items.length} things and earned ${state.stars} stars!`;
     $('#winStars').textContent = '⭐'.repeat(Math.min(state.stars, 14));
 
+    // Best-stars record line
+    const bestEl = $('#bestRecord');
+    if (bestEl) {
+        bestEl.textContent = record.isRecord
+            ? `🎉 New best score: ${record.best} stars!`
+            : `Best score: ${record.best} stars`;
+        bestEl.classList.toggle('is-record', record.isRecord);
+    }
+
+    // Daily streak handling
+    let dailyMsg = '';
+    if (state.daily) {
+        const streak = markDailyComplete();
+        dailyMsg = ` Daily streak: ${streak} day${streak === 1 ? '' : 's'}!`;
+        const tag = $('#winDailyTag');
+        if (tag) { tag.style.display = 'block'; tag.textContent = `🔥 ${streak}-day streak!`; }
+    } else {
+        const tag = $('#winDailyTag');
+        if (tag) tag.style.display = 'none';
+    }
+
     buildScrapbook();
-    awardSticker();
+    const award = awardSticker();
 
     showScreen('winScreen');
     winFanfare();
-    speak('Hooray! You did it!');
+
+    // Extra sparkle for new and/or rare critters
+    if (award.isNew || award.sticker.r !== 'common') {
+        setTimeout(sparkleSound, 700);
+        if (award.sticker.r === 'legendary') rainbowBurst(80);
+    }
+    const rarityWord = award.isNew ? `a new ${RARITY[award.sticker.r].label} critter` : 'a critter';
+    speak(`Hooray! You did it! You found ${award.sticker.n}, ${rarityWord}!${dailyMsg}`);
     confettiStorm();
 }
 
@@ -764,55 +1050,110 @@ async function sharePhotos() {
     });
 }
 
-// ---------- Sticker book ----------
-function loadStickers() {
-    try { return JSON.parse(localStorage.getItem(STICKER_KEY)) || []; }
-    catch (e) { return []; }
+// ---------- Sticker collection ----------
+// Stored as a map of { stickerId: count }. Migrates old emoji-array format.
+function loadCollection() {
+    try {
+        const raw = JSON.parse(localStorage.getItem(STICKER_KEY));
+        if (Array.isArray(raw)) {
+            const map = {};
+            raw.forEach((e) => {
+                const s = STICKER_SET.find((x) => x.e === e);
+                if (s) map[s.id] = (map[s.id] || 0) + 1;
+            });
+            return map;
+        }
+        return raw || {};
+    } catch (e) { return {}; }
+}
+function saveCollection(map) {
+    try { localStorage.setItem(STICKER_KEY, JSON.stringify(map)); } catch (e) { /* ignore */ }
+}
+function uniqueStickerCount() {
+    return Object.keys(loadCollection()).length;
 }
 
-function saveStickers(list) {
-    try { localStorage.setItem(STICKER_KEY, JSON.stringify(list)); } catch (e) { /* ignore */ }
+// Weighted pick of a rarity, then a random sticker within that tier
+function rollSticker() {
+    const pool = [];
+    Object.entries(RARITY).forEach(([key, r]) => { for (let i = 0; i < r.weight; i++) pool.push(key); });
+    const tier = rand(pool);
+    const choices = STICKER_SET.filter((s) => s.r === tier);
+    return rand(choices.length ? choices : STICKER_SET);
 }
 
 function awardSticker() {
-    const earned = loadStickers();
-    const sticker = rand(STICKERS);
-    earned.push(sticker);
-    saveStickers(earned);
-    $('#rewardEmoji').textContent = sticker;
-    $('#rewardSticker').style.display = 'flex';
+    const collection = loadCollection();
+    const sticker = rollSticker();
+    const isNew = !collection[sticker.id];
+    collection[sticker.id] = (collection[sticker.id] || 0) + 1;
+    saveCollection(collection);
+    state.lastStickerId = sticker.id;
+
+    // Fill in the win-screen reward card
+    $('#rewardEmoji').textContent = sticker.e;
+    $('#rewardName').textContent = sticker.n;
+    $('#rewardRarity').textContent = RARITY[sticker.r].label;
+    $('#rewardRarity').className = 'reward-rarity rarity-' + sticker.r;
+    $('#rewardLabel').textContent = isNew ? 'New sticker unlocked!' : 'Sticker found again!';
+    $('#rewardNewBadge').style.display = isNew ? 'inline-block' : 'none';
+    const card = $('#rewardSticker');
+    card.className = 'reward-sticker rarity-' + sticker.r + (isNew ? ' is-new' : '');
+    card.style.display = 'flex';
+
+    return { sticker, isNew };
 }
 
 function renderStickerBook() {
-    const earned = loadStickers();
+    const collection = loadCollection();
     const book = $('#stickerBook');
     const row = $('#stickerRow');
-    const goal = 24;
-    const visible = earned.slice(-goal);
-    const progress = Math.min(visible.length, goal);
-    const pct = (progress / goal) * 100;
+    const total = STICKER_SET.length;
+    const owned = Object.keys(collection).length;
+    const pct = (owned / total) * 100;
 
-    $('#stickerCountBadge').textContent = `${progress}/${goal}`;
+    $('#stickerCountBadge').textContent = `${owned}/${total}`;
     $('#stickerProgressFill').style.width = pct + '%';
-    $('#stickerBookSub').textContent = progress
-        ? `Nice collection! ${goal - progress} more spots to fill.`
-        : 'Finish hunts to unlock surprise stickers.';
+    $('#stickerBookSub').textContent = owned >= total
+        ? '🎉 Wow! You collected every critter!'
+        : owned
+            ? `Great collection! ${total - owned} critters still hiding.`
+            : 'Finish hunts to unlock surprise critters!';
 
     row.innerHTML = '';
-    visible.forEach((s, i) => {
+    STICKER_SET.forEach((s, i) => {
+        const count = collection[s.id] || 0;
         const span = document.createElement('span');
-        span.className = 'sticker';
-        span.textContent = s;
-        span.style.setProperty('--sticker-delay', (i * 0.025) + 's');
+        const got = count > 0;
+        span.className = 'sticker ' + (got ? 'rarity-' + s.r : 'locked')
+            + (got && s.id === state.lastStickerId ? ' is-new' : '');
+        span.textContent = got ? s.e : '?';
+        span.style.setProperty('--sticker-delay', (i * 0.02) + 's');
+        if (got) {
+            span.title = `${s.n} (${RARITY[s.r].label})`;
+            span.setAttribute('aria-label', `${s.n}, ${RARITY[s.r].label}`);
+            if (count > 1) {
+                const badge = document.createElement('span');
+                badge.className = 'sticker-count';
+                badge.textContent = '×' + count;
+                span.appendChild(badge);
+            }
+            if (s.id === state.lastStickerId) {
+                const nb = document.createElement('span');
+                nb.className = 'sticker-new';
+                nb.textContent = 'NEW';
+                span.appendChild(nb);
+            }
+            span.addEventListener('click', () => {
+                tone(720, 0.06, 'triangle', 0.12);
+                speak(`${s.n}. ${RARITY[s.r].label}.`);
+                $('#homeSpeech').textContent = `That's ${s.n}, a ${RARITY[s.r].label.toLowerCase()} critter!`;
+            });
+        } else {
+            span.setAttribute('aria-label', 'Locked sticker');
+        }
         row.appendChild(span);
     });
-
-    for (let i = progress; i < goal; i++) {
-        const slot = document.createElement('span');
-        slot.className = 'sticker locked';
-        slot.textContent = '?';
-        row.appendChild(slot);
-    }
 
     book.style.display = 'block';
 }
@@ -873,6 +1214,18 @@ function setSound(on) {
     prefs.sound = on;
     savePrefs(prefs);
 }
+function setMusic(on) {
+    state.music = on;
+    const btn = $('#musicToggle');
+    if (btn) {
+        btn.textContent = on ? '🎵' : '🔇';
+        btn.classList.toggle('muted', !on);
+    }
+    if (on) startMusic(); else stopMusic();
+    const prefs = loadPrefs();
+    prefs.music = on;
+    savePrefs(prefs);
+}
 
 // ---------- Wire up ----------
 function goHome() {
@@ -880,8 +1233,10 @@ function goHome() {
     $$('.critter-pop').forEach((c) => c.remove());
     closeChallenge();
     releaseWakeLock();
+    stopMusic();
     renderStickerBook();
     renderStats();
+    renderDailyCard();
     showScreen('homeScreen');
 }
 
@@ -889,11 +1244,14 @@ function init() {
     // Restore saved preferences
     const prefs = loadPrefs();
     if (typeof prefs.sound === 'boolean') state.sound = prefs.sound;
+    if (typeof prefs.music === 'boolean') state.music = prefs.music;
 
     buildThemeGrid();
     renderStickerBook();
     renderStats();
+    renderDailyCard();
     setSound(state.sound);
+    if (state.music) startMusic();
 
     $$('.count-btn').forEach((btn) => {
         btn.addEventListener('click', () => {
@@ -928,6 +1286,16 @@ function init() {
 
     $('#soundToggle').addEventListener('click', () => setSound(!state.sound));
     $('#huntSoundToggle').addEventListener('click', () => setSound(!state.sound));
+    const musicBtn = $('#musicToggle');
+    if (musicBtn) musicBtn.addEventListener('click', () => setMusic(!state.music));
+
+    // Daily quest button
+    const dailyBtn = $('#dailyBtn');
+    if (dailyBtn) dailyBtn.addEventListener('click', startDailyQuest);
+
+    // Onboarding navigation
+    const onboardNext = $('#onboardNext');
+    if (onboardNext) onboardNext.addEventListener('click', nextOnboard);
 
     // Prime speech voices on first interaction (mobile)
     document.body.addEventListener('pointerdown', function prime() {
@@ -941,6 +1309,9 @@ function init() {
             requestWakeLock();
         }
     });
+
+    // Show onboarding for first-time players
+    maybeShowOnboarding();
 }
 
 // Register the service worker for offline / installable PWA support

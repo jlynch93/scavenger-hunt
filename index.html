@@ -56,6 +56,20 @@
                 <div class="sticker-row" id="stickerRow"></div>
             </div>
 
+            <div class="daily-card" id="dailyCard">
+                <div class="daily-head">
+                    <span class="daily-emoji" id="dailyEmoji">🌳</span>
+                    <div>
+                        <p class="eyebrow">Today's Quest</p>
+                        <p class="daily-sub" id="dailySub">Outside • Classic Quest</p>
+                    </div>
+                    <div class="daily-streak" id="dailyStreak" style="display:none;">
+                        <span>🔥</span><span id="streakNum">0</span>
+                    </div>
+                </div>
+                <button class="daily-btn" id="dailyBtn">Play Today's Quest</button>
+            </div>
+
             <div class="picker world-picker">
                 <p class="picker-label">Choose your adventure</p>
                 <div class="theme-grid" id="themeGrid"><!-- themes injected --></div>
@@ -75,6 +89,7 @@
             </button>
 
             <button class="sound-toggle" id="soundToggle" aria-label="Toggle sound">🔊</button>
+            <button class="music-toggle" id="musicToggle" aria-label="Toggle music">🎵</button>
         </section>
 
         <!-- ============ HUNT SCREEN ============ -->
@@ -88,9 +103,8 @@
                 <button class="icon-btn" id="huntSoundToggle" aria-label="Toggle sound">🔊</button>
             </header>
 
-            <div class="track">
-                <div class="track-fill" id="trackFill"></div>
-                <div class="track-critter" id="trackCritter">🐾</div>
+            <div class="path" id="path" aria-live="polite">
+                <!-- stepping stones + mascot injected -->
             </div>
 
             <div class="guide-panel" id="guidePanel">
@@ -118,16 +132,22 @@
             <div class="medal">🏅</div>
             <p class="win-sub" id="winSub">You found everything!</p>
             <div class="win-stars" id="winStars"></div>
+            <p class="best-record" id="bestRecord">Best score: 0 stars</p>
+            <p class="win-daily-tag" id="winDailyTag" style="display:none;">🔥 1-day streak!</p>
 
             <div class="reward-sticker" id="rewardSticker" style="display:none;">
-                <p class="reward-label">New sticker!</p>
+                <p class="reward-label" id="rewardLabel">New sticker unlocked!</p>
                 <div class="reward-emoji" id="rewardEmoji">🦊</div>
+                <p class="reward-name" id="rewardName">Finn the Fox</p>
+                <p class="reward-rarity rarity-common" id="rewardRarity">Common</p>
+                <span class="reward-new-badge" id="rewardNewBadge" style="display:none;">NEW</span>
             </div>
 
             <div class="scrapbook" id="scrapbook" style="display:none;">
                 <p class="picker-label">My Photo Scrapbook</p>
                 <div class="scrap-grid" id="scrapGrid"></div>
                 <button class="text-btn" id="shareBtn">📤 Share my photos</button>
+                <p class="photo-privacy-note">Photos stay on your device and are never uploaded.</p>
             </div>
 
             <button class="big-play-btn" id="playAgainBtn">
@@ -148,6 +168,16 @@
                 <button class="challenge-primary" id="challengeDoneBtn">I did it! ⭐</button>
                 <button class="challenge-secondary" id="challengeNewBtn">New mission 🎲</button>
             </div>
+        </div>
+    </div>
+
+    <div class="onboard-layer" id="onboardLayer">
+        <div class="onboard-card" role="dialog" aria-modal="true" aria-labelledby="onboardTitle">
+            <div class="onboard-mascot" id="onboardMascot">🦊</div>
+            <h3 id="onboardTitle">Hi!</h3>
+            <p id="onboardText">Let's go on a treasure hunt together!</p>
+            <div class="onboard-dots" id="onboardDots"></div>
+            <button class="onboard-primary" id="onboardNext"><span>Next</span></button>
         </div>
     </div>
 
