@@ -1,0 +1,27 @@
+{
+  "name": "Critter Quest! Scavenger Hunt for Kids",
+  "short_name": "Critter Quest",
+  "description": "A colorful, randomized scavenger hunt game for little kids. Find things in the real world, earn stars and stickers!",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#8ed1fc",
+  "theme_color": "#7c4dff",
+  "lang": "en",
+  "categories": ["games", "education", "kids"],
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

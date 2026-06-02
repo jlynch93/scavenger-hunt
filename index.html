@@ -5,11 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#7c4dff">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Critter Quest">
+    <meta name="description" content="A colorful, randomized scavenger hunt game for little kids. Find things in the real world, earn stars and stickers!">
     <title>Critter Quest! Scavenger Hunt for Kids</title>
+    <link rel="manifest" href="manifest.webmanifest">
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦊</text></svg>">
+    <link rel="icon" href="icon.svg">
+    <link rel="apple-touch-icon" href="icon.svg">
 </head>
 <body>
     <div class="sky">
@@ -28,6 +34,12 @@
             </div>
 
             <h1 class="game-title">Critter Quest!</h1>
+
+            <div class="stat-strip" id="statStrip" style="display:none;">
+                <div class="stat-pill"><span class="stat-emoji">🏆</span><span id="statHunts">0</span><span class="stat-label">hunts</span></div>
+                <div class="stat-pill"><span class="stat-emoji">⭐</span><span id="statStars">0</span><span class="stat-label">stars</span></div>
+                <div class="stat-pill"><span class="stat-emoji">🎟️</span><span id="statStickers">0</span><span class="stat-label">stickers</span></div>
+            </div>
 
             <div class="picker">
                 <p class="picker-label">Pick a place to explore</p>

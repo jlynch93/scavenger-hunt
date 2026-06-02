@@ -13,7 +13,18 @@ A colorful, mobile-first scavenger hunt game for little kids. Pick a world (or t
 - **Random rotating mascots** per world and **pop-in bonus critters** you can tap for extra stars
 - **Fun feedback**: chimes, spoken praise, confetti, and a progress critter
 - **Star rewards**, earnable stickers, photo scrapbook, and a celebration win screen
-- **Sound toggle** for quiet play
+- **Sound toggle** for quiet play (preference is remembered)
+
+## Mobile & PWA
+
+- **Installable PWA** — add to the home screen and launch fullscreen (`manifest.webmanifest`, `sw.js`, `icon.svg`)
+- **Works offline** — the app shell is cached, so it plays with no signal
+- **Haptic feedback** — gentle vibrations on finds, treasures, bonus critters, and wins
+- **Screen Wake Lock** — the screen stays on while a kid is hunting in the real world
+- **Lifetime stats** — hunts completed, total stars, and stickers shown on the home screen
+- **Reduced-motion friendly** — calmer animations when the device requests it
+
+> Note: icons are SVG. For the widest install support on Android you may want to add 192px and 512px PNG icons and reference them in `manifest.webmanifest`.
 
 ## Live Demo
 

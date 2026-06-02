@@ -146,6 +146,8 @@ const RAINBOW = ['#ff3b3b', '#ff9f43', '#ffd23f', '#3ddc84', '#29b6f6', '#7c4dff
 // Stickers a kid can earn and keep in their sticker book
 const STICKERS = ['🦊', '🐰', '🐢', '🦉', '🐝', '🦋', '🐞', '🐸', '🐧', '🦄', '🐱', '🐶', '🐼', '🦁', '🐯', '🐵', '🐙', '🐟', '🦜', '🐛'];
 const STICKER_KEY = 'critterQuestStickers';
+const PREF_KEY = 'critterQuestPrefs';
+const STATS_KEY = 'critterQuestStats';
 
 // Random "Quest Twists" — each round randomly gets one to keep things fresh
 const QUEST_TWISTS = [
@@ -168,6 +170,7 @@ const state = {
     stars: 0,
     sound: true,
     pendingPhotoId: null,
+    haptics: true,
     twist: 'classic',
     starMult: 1,
     bonusStars: 0,
@@ -231,6 +234,61 @@ function clueFor(name) {
     const letter = name[0].toUpperCase();
     const len = name.replace(/[^a-zA-Z]/g, '').length;
     return `Starts with "${letter}" • ${len} letters`;
+}
+
+// ---------- Haptics ----------
+function buzz(pattern) {
+    if (!state.haptics) return;
+    try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) { /* ignore */ }
+}
+
+// ---------- Screen Wake Lock (keep screen on while hunting) ----------
+let wakeLock = null;
+async function requestWakeLock() {
+    try {
+        if ('wakeLock' in navigator) {
+            wakeLock = await navigator.wakeLock.request('screen');
+            wakeLock.addEventListener('release', () => { wakeLock = null; });
+        }
+    } catch (e) { /* ignore (e.g. battery saver) */ }
+}
+function releaseWakeLock() {
+    try { if (wakeLock) { wakeLock.release(); wakeLock = null; } } catch (e) { /* ignore */ }
+}
+
+// ---------- Preferences ----------
+function loadPrefs() {
+    try { return JSON.parse(localStorage.getItem(PREF_KEY)) || {}; }
+    catch (e) { return {}; }
+}
+function savePrefs(prefs) {
+    try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch (e) { /* ignore */ }
+}
+
+// ---------- Lifetime stats ----------
+function loadStats() {
+    try { return JSON.parse(localStorage.getItem(STATS_KEY)) || { hunts: 0, stars: 0 }; }
+    catch (e) { return { hunts: 0, stars: 0 }; }
+}
+function saveStats(stats) {
+    try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch (e) { /* ignore */ }
+}
+function recordWin(stars) {
+    const stats = loadStats();
+    stats.hunts += 1;
+    stats.stars += stars;
+    saveStats(stats);
+}
+function renderStats() {
+    const stats = loadStats();
+    const stickers = loadStickers().length;
+    const strip = $('#statStrip');
+    if (!strip) return;
+    if (!stats.hunts && !stats.stars && !stickers) { strip.style.display = 'none'; return; }
+    $('#statHunts').textContent = stats.hunts;
+    $('#statStars').textContent = stats.stars;
+    $('#statStickers').textContent = stickers;
+    strip.style.display = 'flex';
 }
 
 // ---------- Sound ----------
@@ -326,6 +384,8 @@ function startHunt() {
     showScreen('huntScreen');
     showTwistBanner(twist);
     happyChime();
+    buzz(20);
+    requestWakeLock();
     scheduleCritterPop();
 }
 
@@ -392,6 +452,7 @@ function spawnCritterPop() {
     el.style.top = (30 + Math.random() * 50) + 'vh';
     el.addEventListener('click', () => {
         tone(990, 0.08, 'triangle', 0.18);
+        buzz([15, 30, 15]);
         burstConfetti(10);
         state.bonusStars += 1;
         updateStars();
@@ -497,14 +558,17 @@ function collect(item, card) {
     if (item.rainbow) {
         winFanfare();
         rainbowBurst(60);
+        buzz([20, 40, 20, 40, 60]);
         speak('Wow! A rainbow treasure!');
     } else if (item.golden) {
         winFanfare();
         rainbowBurst(40);
+        buzz([20, 40, 60]);
         speak('Wow! A golden surprise!');
     } else {
         happyChime();
         burstConfetti(14);
+        buzz(30);
         speak(item.mystery ? 'It was a ' + item.name + '!' : rand(PRAISE));
     }
 
@@ -536,6 +600,9 @@ function updateTrack() {
 function win() {
     clearTimeout(state.popTimer);
     $$('.critter-pop').forEach((c) => c.remove());
+    releaseWakeLock();
+    recordWin(state.stars);
+    buzz([30, 50, 30, 50, 30, 50, 120]);
     $('#winMascot').textContent = state.mascot;
     $('#winSub').textContent = `You found all ${state.items.length} things and earned ${state.stars} stars!`;
     $('#winStars').textContent = '⭐'.repeat(Math.min(state.stars, 14));
@@ -675,19 +742,30 @@ function setSound(on) {
     $('#soundToggle').classList.toggle('muted', !on);
     $('#huntSoundToggle').classList.toggle('muted', !on);
     if (!on && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+    const prefs = loadPrefs();
+    prefs.sound = on;
+    savePrefs(prefs);
 }
 
 // ---------- Wire up ----------
 function goHome() {
     clearTimeout(state.popTimer);
     $$('.critter-pop').forEach((c) => c.remove());
+    releaseWakeLock();
     renderStickerBook();
+    renderStats();
     showScreen('homeScreen');
 }
 
 function init() {
+    // Restore saved preferences
+    const prefs = loadPrefs();
+    if (typeof prefs.sound === 'boolean') state.sound = prefs.sound;
+
     buildThemeGrid();
     renderStickerBook();
+    renderStats();
+    setSound(state.sound);
 
     $$('.count-btn').forEach((btn) => {
         btn.addEventListener('click', () => {
@@ -724,6 +802,20 @@ function init() {
         if ('speechSynthesis' in window) window.speechSynthesis.getVoices();
         document.body.removeEventListener('pointerdown', prime);
     }, { once: true });
+
+    // Re-acquire the wake lock if the user tabs away and comes back mid-hunt
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && $('#huntScreen').classList.contains('active')) {
+            requestWakeLock();
+        }
+    });
+}
+
+// Register the service worker for offline / installable PWA support
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => { /* ignore */ });
+    });
 }
 
 document.addEventListener('DOMContentLoaded', init);
