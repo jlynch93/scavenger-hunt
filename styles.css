@@ -447,6 +447,93 @@ body {
     to { transform: translateY(110vh) rotate(720deg); opacity: 0.9; }
 }
 
+/* ===== Surprise Mix theme card ===== */
+.theme-card.surprise-card {
+    background: linear-gradient(135deg, #ffe9a8, #ffc2e2, #c2e9ff, #c8ffd4);
+    background-size: 200% 200%;
+    animation: surpriseShift 6s ease infinite;
+}
+.theme-card.surprise-card.selected { border-color: var(--pink); }
+@keyframes surpriseShift {
+    0%,100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+/* ===== Quest Twist banner ===== */
+.twist-banner {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.6);
+    background: #fff;
+    border-radius: 28px;
+    padding: 22px 30px;
+    box-shadow: 0 12px 0 rgba(0,0,0,0.18), 0 0 40px rgba(124,77,255,0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-align: center;
+    z-index: 60;
+    opacity: 0;
+    pointer-events: none;
+    border: 5px solid var(--purple);
+    max-width: 80vw;
+}
+.twist-banner.show { animation: twistPop 2.2s ease forwards; }
+@keyframes twistPop {
+    0% { opacity: 0; transform: translate(-50%,-50%) scale(0.5) rotate(-6deg); }
+    14% { opacity: 1; transform: translate(-50%,-50%) scale(1.1) rotate(3deg); }
+    24% { transform: translate(-50%,-50%) scale(1) rotate(0deg); }
+    82% { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%,-50%) scale(0.9); }
+}
+.twist-banner .twist-emoji { font-size: 60px; line-height: 1; animation: bob 1.2s ease-in-out infinite; }
+.twist-banner .twist-name { font-size: 26px; font-weight: 800; color: var(--purple); }
+.twist-banner .twist-desc { font-size: 16px; font-weight: 700; color: var(--ink); }
+
+/* ===== Rainbow treasure item ===== */
+.find-card.rainbow {
+    background: linear-gradient(135deg, #ff3b3b, #ff9f43, #ffd23f, #3ddc84, #29b6f6, #7c4dff, #ff5ca8);
+    background-size: 300% 300%;
+    border-color: #fff;
+    animation: rainbowShift 3s linear infinite;
+    box-shadow: 0 8px 0 rgba(0,0,0,0.2), 0 0 24px rgba(255,255,255,0.7);
+}
+@keyframes rainbowShift { to { background-position: 300% 0; } }
+.find-card.rainbow .card-name { color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+
+/* ===== Mystery clue item ===== */
+.find-card.mystery {
+    background: linear-gradient(180deg, #efe7ff, #ddd0ff);
+    border-color: var(--purple);
+}
+.find-card.mystery .card-emoji { animation: mysteryWobble 1.6s ease-in-out infinite; }
+.find-card.mystery .card-name { font-size: 14px; color: var(--purple); }
+@keyframes mysteryWobble {
+    0%,100% { transform: rotate(-6deg); }
+    50% { transform: rotate(6deg); }
+}
+.find-card.mystery.revealed { background: linear-gradient(180deg, #e8ffe8, #c9f7c9); }
+.find-card.mystery.revealed .card-name { font-size: 18px; color: var(--ink); }
+
+/* ===== Random pop-in bonus critter ===== */
+.critter-pop {
+    position: fixed;
+    z-index: 55;
+    font-size: 52px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+    animation: critterIn 0.4s cubic-bezier(0.34,1.56,0.64,1), critterIdle 1.1s ease-in-out 0.4s infinite;
+}
+.critter-pop.caught { animation: critterCaught 0.3s ease forwards; }
+@keyframes critterIn { from { transform: scale(0) rotate(-30deg); } to { transform: scale(1) rotate(0); } }
+@keyframes critterIdle { 0%,100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-10px) rotate(4deg); } }
+@keyframes critterCaught { to { transform: scale(2.2); opacity: 0; } }
+
 /* ===== Larger screens ===== */
 @media (min-width: 600px) {
     .theme-grid { grid-template-columns: repeat(4, 1fr); }

@@ -1,14 +1,18 @@
 # Critter Quest — Scavenger Hunt for Kids
 
-A colorful, mobile-first scavenger hunt game for little kids. Pick a place (House, Outside, Park, Colors, Farm, Sea), then tap big emoji cards as you find each thing in real life. Features read-aloud item names (great for pre-readers), sound effects, confetti, a star counter, and a friendly critter mascot. Pure HTML/CSS/JS — no build step required.
+A colorful, mobile-first scavenger hunt game for little kids. Pick a world (or the **Surprise Mix**), then tap big emoji cards as you find each thing in real life. Every round is different thanks to randomized item picks, random **Quest Twists**, mystery clue cards, rainbow treasures, rotating mascots, and surprise pop-in critters. Features read-aloud item names (great for pre-readers), sound effects, confetti, and a star counter. Pure HTML/CSS/JS — no build step required.
 
 ## Features
 
 - **Mobile-first** with large touch targets and no zoom jitter
 - **Read-aloud** item names via the Web Speech API (tap the 🔊 on any card)
-- **Six themed worlds** with random items each round
+- **13 themed worlds** (House, Outside, Park, Colors, Farm, Sea, Kitchen, Toys, Shapes, Weather, Vehicles, Space, Sweets) with 16–24 items each
+- **Surprise Mix** world that pulls a fresh random set from every theme
+- **Random Quest Twists** each round: Classic, Golden Rush, Mystery Mode, Rainbow Round, Double Stars, Speedy Safari
+- **Special item types**: golden treasures (3⭐), rainbow treasures (5⭐), and mystery clue cards that reveal when found
+- **Random rotating mascots** per world and **pop-in bonus critters** you can tap for extra stars
 - **Fun feedback**: chimes, spoken praise, confetti, and a progress critter
-- **Star rewards** and a celebration win screen
+- **Star rewards**, earnable stickers, photo scrapbook, and a celebration win screen
 - **Sound toggle** for quiet play
 
 ## Live Demo
