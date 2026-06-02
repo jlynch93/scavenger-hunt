@@ -83,6 +83,15 @@
                 <div class="track-critter" id="trackCritter">🐾</div>
             </div>
 
+            <div class="guide-panel" id="guidePanel">
+                <div class="guide-mascot" id="guideMascot">🦊</div>
+                <div class="guide-copy">
+                    <div class="guide-title" id="guideTitle">Explorer Guide</div>
+                    <div class="guide-text" id="guideText">Tap the magic button for a bonus mission!</div>
+                </div>
+                <button class="guide-mission-btn" id="guideMissionBtn" aria-label="Get a bonus mission">🎲</button>
+            </div>
+
             <p class="hunt-instruction" id="huntInstruction">Tap a picture when you find it!</p>
 
             <div class="card-grid" id="cardGrid"><!-- cards injected --></div>
@@ -119,6 +128,18 @@
     </div>
 
     <div class="confetti-layer" id="confettiLayer"></div>
+    <div class="challenge-layer" id="challengeLayer">
+        <div class="challenge-card" role="dialog" aria-modal="true" aria-labelledby="challengeTitle">
+            <button class="challenge-close" id="challengeClose" aria-label="Close challenge">×</button>
+            <div class="challenge-emoji" id="challengeEmoji">🎯</div>
+            <h3 id="challengeTitle">Bonus Mission!</h3>
+            <p id="challengeText">Do a tiny explorer dance.</p>
+            <div class="challenge-actions">
+                <button class="challenge-primary" id="challengeDoneBtn">I did it! ⭐</button>
+                <button class="challenge-secondary" id="challengeNewBtn">New mission 🎲</button>
+            </div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>

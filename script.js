@@ -161,6 +161,35 @@ const QUEST_TWISTS = [
 
 // Cheerful surprise critters that randomly pop in during a hunt
 const POP_CRITTERS = ['🐸', '🐝', '🦋', '🐞', '🐰', '🐿️', '🦔', '🐥', '🦊', '🐢'];
+const BONUS_MISSIONS = [
+    ['🕵️', 'Sneaky Search', 'Tiptoe like a secret explorer for 5 steps, then look again!'],
+    ['🦘', 'Kangaroo Hop', 'Do 3 tiny hops before you search for the next thing!'],
+    ['👂', 'Super Listener', 'Close your eyes, listen for 3 sounds, then keep hunting!'],
+    ['🌪️', 'Spin Scanner', 'Slowly turn in a circle and scan the room like a treasure radar!'],
+    ['🤖', 'Robot Finder', 'Walk like a robot to the next place you search!'],
+    ['🦀', 'Crab Walk', 'Take 4 crab steps, then look low for your next treasure!'],
+    ['🧙', 'Magic Words', 'Say “Critter magic!” before you tap the next find!'],
+    ['🙌', 'Team High Five', 'Give your helper a high five or give yourself one!'],
+    ['🔎', 'Tiny Detective', 'Look under, beside, and behind something safe!'],
+    ['🎵', 'Hunt Song', 'Hum a silly tune while you search for 10 seconds!'],
+    ['🐢', 'Slow Motion', 'Search in slow motion until you spot something!'],
+    ['🚀', 'Rocket Countdown', 'Count down 5, 4, 3, 2, 1, then blast off to search!'],
+];
+const ITEM_PROMPTS = [
+    'Can you point to it with one finger before you tap?',
+    'Can you find it without running?',
+    'Can you whisper its name like a secret code?',
+    'Can you spot it from far away first?',
+    'Can you make a silly face when you find it?',
+    'Can you search high, middle, and low?',
+    'Can you ask your helper, “hot or cold?”',
+    'Can you touch your nose, then keep looking?',
+];
+const MILESTONES = [
+    [0.25, 'Warm-up explorer!', 'You are already on the trail!'],
+    [0.5, 'Halfway hero!', 'Do a tiny wiggle dance — you are halfway there!'],
+    [0.75, 'Almost there!', 'Take a big explorer breath and finish strong!'],
+];
 
 const state = {
     theme: 'surprise',
@@ -174,6 +203,9 @@ const state = {
     twist: 'classic',
     starMult: 1,
     bonusStars: 0,
+    completedChallenges: 0,
+    currentChallenge: null,
+    lastMilestone: 0,
     mascot: '🐶',
     popTimer: null,
 };
@@ -373,6 +405,9 @@ function startHunt() {
     state.found = new Set();
     state.stars = 0;
     state.bonusStars = 0;
+    state.completedChallenges = 0;
+    state.currentChallenge = null;
+    state.lastMilestone = 0;
 
     $('#starCount').textContent = '0';
     $('#trackCritter').textContent = state.mascot;
@@ -382,6 +417,7 @@ function startHunt() {
     updateTrack();
     buildCards();
     showScreen('huntScreen');
+    setGuide('Ready, explorer?', `Start with any card, or tap 🎲 for a silly bonus mission.`, state.mascot, true);
     showTwistBanner(twist);
     happyChime();
     buzz(20);
@@ -433,6 +469,71 @@ function showTwistBanner(twist) {
     speak(twist.name);
     clearTimeout(showTwistBanner._t);
     showTwistBanner._t = setTimeout(() => banner.classList.remove('show'), 2200);
+}
+
+function setGuide(title, text, emoji = state.mascot, speakIt = false) {
+    const panel = $('#guidePanel');
+    if (!panel) return;
+    $('#guideMascot').textContent = emoji;
+    $('#guideTitle').textContent = title;
+    $('#guideText').textContent = text;
+    panel.classList.remove('pulse');
+    void panel.offsetWidth;
+    panel.classList.add('pulse');
+    if (speakIt) speak(`${title}. ${text}`);
+}
+
+function nextUnfoundItem() {
+    return state.items.find((it) => !state.found.has(it.id));
+}
+
+function promptNextFind() {
+    const item = nextUnfoundItem();
+    if (!item) return;
+    const label = item.mystery ? clueFor(item.name) : item.name;
+    setGuide('Next clue!', `Try to find ${label}. ${rand(ITEM_PROMPTS)}`, state.mascot);
+}
+
+function checkMilestone() {
+    const pct = state.items.length ? state.found.size / state.items.length : 0;
+    const hit = MILESTONES.find(([mark]) => pct >= mark && state.lastMilestone < mark);
+    if (!hit) return;
+    state.lastMilestone = hit[0];
+    setGuide(hit[1], hit[2], '🏅', true);
+    burstConfetti(24);
+    buzz([20, 30, 20]);
+}
+
+function pickMission() {
+    const [emoji, title, text] = rand(BONUS_MISSIONS);
+    return { emoji, title, text };
+}
+
+function showChallenge(mission = pickMission()) {
+    state.currentChallenge = mission;
+    $('#challengeEmoji').textContent = mission.emoji;
+    $('#challengeTitle').textContent = mission.title;
+    $('#challengeText').textContent = mission.text;
+    $('#challengeLayer').classList.add('active');
+    tone(740, 0.08, 'square', 0.12);
+    buzz(18);
+    speak(`${mission.title}. ${mission.text}`);
+}
+
+function closeChallenge() {
+    $('#challengeLayer').classList.remove('active');
+}
+
+function completeChallenge() {
+    if (!state.currentChallenge) return;
+    closeChallenge();
+    state.completedChallenges += 1;
+    state.bonusStars += 1;
+    updateStars();
+    setGuide('Bonus star!', `Mission complete! You have done ${state.completedChallenges} bonus mission${state.completedChallenges === 1 ? '' : 's'}!`, '⭐', true);
+    happyChime();
+    burstConfetti(26);
+    buzz([20, 40, 40]);
 }
 
 // Randomly pop a friendly critter onto the screen for a tappable bonus
@@ -574,6 +675,13 @@ function collect(item, card) {
 
     if (state.found.size === state.items.length) {
         setTimeout(win, 700);
+    } else {
+        checkMilestone();
+        if (state.found.size > 0 && state.found.size % 3 === 0 && Math.random() < 0.8) {
+            setTimeout(() => showChallenge(), 550);
+        } else {
+            setTimeout(promptNextFind, 550);
+        }
     }
 }
 
@@ -751,6 +859,7 @@ function setSound(on) {
 function goHome() {
     clearTimeout(state.popTimer);
     $$('.critter-pop').forEach((c) => c.remove());
+    closeChallenge();
     releaseWakeLock();
     renderStickerBook();
     renderStats();
@@ -781,6 +890,10 @@ function init() {
     $('#playAgainBtn').addEventListener('click', startHunt);
     $('#homeFromWinBtn').addEventListener('click', goHome);
     $('#shareBtn').addEventListener('click', sharePhotos);
+    $('#guideMissionBtn').addEventListener('click', () => showChallenge());
+    $('#challengeClose').addEventListener('click', closeChallenge);
+    $('#challengeDoneBtn').addEventListener('click', completeChallenge);
+    $('#challengeNewBtn').addEventListener('click', () => showChallenge());
 
     $('#cameraInput').addEventListener('change', onPhotoChosen);
 
