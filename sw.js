@@ -1,11 +1,11 @@
 // ===== Critter Quest service worker =====
 // Bump CACHE_VERSION whenever app shell files change to force an update.
-const CACHE_VERSION = 'critter-quest-v4';
+const CACHE_VERSION = 'critter-quest-v8';
 const APP_SHELL = [
     './',
     './index.html',
-    './styles.css',
-    './script.js',
+    './styles.css?v=8',
+    './script.js?v=8',
     './manifest.webmanifest',
     './icon.svg',
     './icon-maskable.svg',

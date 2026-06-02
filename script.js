@@ -235,6 +235,9 @@ const state = {
     music: true,
     pendingPhotoId: null,
     haptics: true,
+    photoProof: true,
+    easyMode: false,
+    bigCards: false,
     twist: 'classic',
     starMult: 1,
     bonusStars: 0,
@@ -254,8 +257,14 @@ const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
 function showScreen(id) {
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+        document.activeElement.blur();
+    }
     $$('.screen').forEach((s) => s.classList.remove('active'));
     $('#' + id).classList.add('active');
+    window.scrollTo(0, 0);
+    requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }));
+    setTimeout(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }), 80);
 }
 
 function shuffle(arr) {
@@ -332,6 +341,63 @@ function loadPrefs() {
 }
 function savePrefs(prefs) {
     try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch (e) { /* ignore */ }
+}
+
+function currentQuestText() {
+    const theme = THEMES[state.theme] || THEMES.surprise;
+    const mode = state.easyMode ? 'Easy mode' : 'Surprise twist';
+    return `${theme.name} • ${state.count} things • ${mode}`;
+}
+
+function renderQuestSummary() {
+    const theme = THEMES[state.theme] || THEMES.surprise;
+    const emoji = $('#questSummaryEmoji');
+    const text = $('#questSummaryText');
+    if (!emoji || !text) return;
+    emoji.textContent = theme.emoji;
+    text.textContent = currentQuestText();
+}
+
+function updateHuntProgress() {
+    const el = $('#huntProgress');
+    if (!el) return;
+    el.textContent = `${state.found.size} of ${state.items.length}`;
+}
+
+function updateHuntInstruction() {
+    const el = $('#huntInstruction');
+    if (!el) return;
+    if (state.twist === 'mystery') {
+        el.textContent = 'Tap a card when you spot its secret thing!';
+    } else if (state.photoProof) {
+        el.textContent = 'Tap a card, or use 📸 for photo proof!';
+    } else {
+        el.textContent = 'Tap a card when you find it!';
+    }
+}
+
+function applySettingsUi() {
+    document.body.classList.toggle('photo-proof-off', !state.photoProof);
+    document.body.classList.toggle('big-cards', state.bigCards);
+    const photo = $('#photoProofSetting');
+    const easy = $('#easyModeSetting');
+    const big = $('#bigCardsSetting');
+    const haptics = $('#hapticsSetting');
+    if (photo) photo.checked = state.photoProof;
+    if (easy) easy.checked = state.easyMode;
+    if (big) big.checked = state.bigCards;
+    if (haptics) haptics.checked = state.haptics;
+}
+
+function saveCurrentPrefs() {
+    const prefs = loadPrefs();
+    prefs.sound = state.sound;
+    prefs.music = state.music;
+    prefs.haptics = state.haptics;
+    prefs.photoProof = state.photoProof;
+    prefs.easyMode = state.easyMode;
+    prefs.bigCards = state.bigCards;
+    savePrefs(prefs);
 }
 
 // ---------- Lifetime stats ----------
@@ -504,6 +570,9 @@ function renderDailyCard() {
     subEl.textContent = done
         ? 'Done today! Come back tomorrow 🌙'
         : `${theme.name} • ${cfg.twist.name}`;
+    subEl.textContent = done
+        ? 'Done today! Come back tomorrow 🌙'
+        : `${theme.name} • ${cfg.twist.name}`;
     $('#dailyBtn').classList.toggle('done', done);
     if (d.streak > 0) {
         streakWrap.style.display = 'flex';
@@ -524,26 +593,31 @@ const ONBOARD_STEPS = [
     ['👆', 'Tap when you find it!', 'Tap the picture and earn a shiny star.'],
     ['🎟️', 'Collect critters!', 'Finish hunts to win surprise stickers!'],
 ];
+const ONBOARD_STEPS_CLEAN = [
+    ['🦊', "Hi! I'm Finn!", 'Pick a quest, find real things, and tap each card when you spot it.'],
+    ['🎟️', 'Collect critters!', 'Finish hunts to win surprise stickers for your book.'],
+];
 let onboardIdx = 0;
 function showOnboardStep() {
-    const [emoji, title, text] = ONBOARD_STEPS[onboardIdx];
+    const steps = ONBOARD_STEPS_CLEAN;
+    const [emoji, title, text] = steps[onboardIdx];
     $('#onboardMascot').textContent = emoji;
     $('#onboardTitle').textContent = title;
     $('#onboardText').textContent = text;
     const dots = $('#onboardDots');
     dots.innerHTML = '';
-    ONBOARD_STEPS.forEach((_, i) => {
+    steps.forEach((_, i) => {
         const dot = document.createElement('span');
         dot.className = 'onboard-dot' + (i === onboardIdx ? ' active' : '');
         dots.appendChild(dot);
     });
     $('#onboardNext').querySelector('span').textContent =
-        onboardIdx === ONBOARD_STEPS.length - 1 ? "Let's Play!" : 'Next';
+        onboardIdx === steps.length - 1 ? "Let's Play!" : 'Next';
     speak(`${title}. ${text}`);
     tone(660, 0.08, 'triangle', 0.14);
 }
 function nextOnboard() {
-    if (onboardIdx < ONBOARD_STEPS.length - 1) {
+    if (onboardIdx < ONBOARD_STEPS_CLEAN.length - 1) {
         onboardIdx++;
         showOnboardStep();
     } else {
@@ -586,6 +660,7 @@ function buildThemeGrid() {
             $('#homeSpeech').textContent = t2.special === 'mix'
                 ? `A different mix every time!`
                 : `Let's explore ${t2.name}!`;
+            renderQuestSummary();
             speak(t2.name);
         });
         grid.appendChild(card);
@@ -609,7 +684,10 @@ function startHunt(opts = {}) {
     }));
 
     // Pick a twist (forced for daily, otherwise a fresh random one) + random mascot
-    const twist = (isOpts && opts.twist) ? opts.twist : pickTwist();
+    let twist = (isOpts && opts.twist) ? opts.twist : pickTwist();
+    if (state.easyMode && twist.id === 'mystery') {
+        twist = QUEST_TWISTS.find((t) => t.id === 'classic') || twist;
+    }
     state.twist = twist.id;
     state.starMult = twist.id === 'double' ? 2 : 1;
     state.mascot = themeMascot(theme);
@@ -627,6 +705,8 @@ function startHunt(opts = {}) {
     $('#huntInstruction').textContent = state.twist === 'mystery'
         ? 'Tap a card when you spot its secret thing!'
         : 'Tap it, or use 📸 for photo proof!';
+    updateHuntProgress();
+    updateHuntInstruction();
     buildPath();
     buildCards();
     showScreen('huntScreen');
@@ -708,7 +788,7 @@ function showTwistBanner(twist) {
     banner.classList.add('show');
     speak(twist.name);
     clearTimeout(showTwistBanner._t);
-    showTwistBanner._t = setTimeout(() => banner.classList.remove('show'), 2200);
+    showTwistBanner._t = setTimeout(() => banner.classList.remove('show'), 1500);
 }
 
 function setGuide(title, text, emoji = state.mascot, speakIt = false) {
@@ -828,6 +908,14 @@ function buildCards() {
             <button class="cam-btn" aria-label="Take a photo of ${item.name}">📸</button>
             <span class="check-stamp">✅</span>
         `;
+        card.querySelector('.say-btn').textContent = '🔊';
+        card.querySelector('.cam-btn').textContent = '📸';
+        card.querySelector('.photo-badge').textContent = '📸';
+        card.querySelector('.check-stamp').textContent = '✅';
+        if (item.mystery) card.querySelector('.card-emoji').textContent = '?';
+        if (item.golden) card.querySelector('.card-emoji').textContent = '✨';
+        if (item.rainbow) card.querySelector('.card-emoji').textContent = '🌈';
+        card.classList.toggle('photo-disabled', !state.photoProof);
         card.addEventListener('click', (e) => {
             if (e.target.closest('.say-btn') || e.target.closest('.cam-btn')) return;
             collect(item, card);
@@ -839,6 +927,7 @@ function buildCards() {
         });
         card.querySelector('.cam-btn').addEventListener('click', (e) => {
             e.stopPropagation();
+            if (!state.photoProof) return;
             takePhoto(item.id);
         });
         grid.appendChild(card);
@@ -879,6 +968,7 @@ function collect(item, card) {
         state.found.delete(item.id);
         card.classList.remove('found');
         updateStars();
+        updateHuntProgress();
         updateTrack();
         tone(300, 0.1, 'sine', 0.15);
         return;
@@ -895,6 +985,7 @@ function collect(item, card) {
     }
 
     updateStars();
+    updateHuntProgress();
     updateTrack();
     if (item.rainbow) {
         winFanfare();
@@ -1120,6 +1211,9 @@ function renderStickerBook() {
             ? `Great collection! ${total - owned} critters still hiding.`
             : 'Finish hunts to unlock surprise critters!';
 
+    if (!owned) {
+        $('#stickerBookSub').textContent = 'Mystery spots are waiting. Finish a hunt to reveal your first critter!';
+    }
     row.innerHTML = '';
     STICKER_SET.forEach((s, i) => {
         const count = collection[s.id] || 0;
@@ -1150,6 +1244,7 @@ function renderStickerBook() {
                 $('#homeSpeech').textContent = `That's ${s.n}, a ${RARITY[s.r].label.toLowerCase()} critter!`;
             });
         } else {
+            span.textContent = '';
             span.setAttribute('aria-label', 'Locked sticker');
         }
         row.appendChild(span);
@@ -1207,6 +1302,8 @@ function setSound(on) {
     const icon = on ? '🔊' : '🔇';
     $('#soundToggle').textContent = icon;
     $('#huntSoundToggle').textContent = icon;
+    $('#soundToggle').textContent = on ? '🔊' : '🔇';
+    $('#huntSoundToggle').textContent = on ? '🔊' : '🔇';
     $('#soundToggle').classList.toggle('muted', !on);
     $('#huntSoundToggle').classList.toggle('muted', !on);
     if (!on && 'speechSynthesis' in window) window.speechSynthesis.cancel();
@@ -1219,12 +1316,44 @@ function setMusic(on) {
     const btn = $('#musicToggle');
     if (btn) {
         btn.textContent = on ? '🎵' : '🔇';
+        btn.textContent = on ? '🎵' : '🔇';
         btn.classList.toggle('muted', !on);
     }
     if (on) startMusic(); else stopMusic();
     const prefs = loadPrefs();
     prefs.music = on;
     savePrefs(prefs);
+}
+
+function openSettings() {
+    applySettingsUi();
+    $('#settingsLayer')?.classList.add('active');
+    tone(520, 0.06, 'triangle', 0.1);
+}
+
+function closeSettings() {
+    $('#settingsLayer')?.classList.remove('active');
+}
+
+function resetProgress() {
+    const ok = window.confirm('Reset stickers, stats, daily streak, and onboarding progress?');
+    if (!ok) return;
+    try {
+        localStorage.removeItem(STICKER_KEY);
+        localStorage.removeItem(STATS_KEY);
+        localStorage.removeItem(DAILY_KEY);
+        const prefs = loadPrefs();
+        prefs.onboarded = false;
+        savePrefs(prefs);
+    } catch (e) { /* ignore */ }
+    state.lastStickerId = null;
+    renderStickerBook();
+    renderStats();
+    renderDailyCard();
+    renderQuestSummary();
+    closeSettings();
+    $('#homeSpeech').textContent = 'Fresh start! Your next quest is ready.';
+    burstConfetti(12);
 }
 
 // ---------- Wire up ----------
@@ -1237,6 +1366,7 @@ function goHome() {
     renderStickerBook();
     renderStats();
     renderDailyCard();
+    renderQuestSummary();
     showScreen('homeScreen');
 }
 
@@ -1245,11 +1375,17 @@ function init() {
     const prefs = loadPrefs();
     if (typeof prefs.sound === 'boolean') state.sound = prefs.sound;
     if (typeof prefs.music === 'boolean') state.music = prefs.music;
+    if (typeof prefs.haptics === 'boolean') state.haptics = prefs.haptics;
+    if (typeof prefs.photoProof === 'boolean') state.photoProof = prefs.photoProof;
+    if (typeof prefs.easyMode === 'boolean') state.easyMode = prefs.easyMode;
+    if (typeof prefs.bigCards === 'boolean') state.bigCards = prefs.bigCards;
 
     buildThemeGrid();
     renderStickerBook();
     renderStats();
     renderDailyCard();
+    renderQuestSummary();
+    applySettingsUi();
     setSound(state.sound);
     if (state.music) startMusic();
 
@@ -1258,6 +1394,7 @@ function init() {
             state.count = parseInt(btn.dataset.count, 10);
             $$('.count-btn').forEach((b) => b.classList.remove('active'));
             btn.classList.add('active');
+            renderQuestSummary();
             tone(560, 0.08, 'square', 0.15);
         });
     });
@@ -1296,6 +1433,39 @@ function init() {
     // Onboarding navigation
     const onboardNext = $('#onboardNext');
     if (onboardNext) onboardNext.addEventListener('click', nextOnboard);
+    const onboardSkip = $('#onboardSkip');
+    if (onboardSkip) onboardSkip.addEventListener('click', finishOnboarding);
+
+    const settingsToggle = $('#settingsToggle');
+    const settingsClose = $('#settingsClose');
+    if (settingsToggle) settingsToggle.addEventListener('click', openSettings);
+    if (settingsClose) settingsClose.addEventListener('click', closeSettings);
+    $('#settingsLayer')?.addEventListener('click', (e) => {
+        if (e.target.id === 'settingsLayer') closeSettings();
+    });
+    $('#photoProofSetting')?.addEventListener('change', (e) => {
+        state.photoProof = e.target.checked;
+        saveCurrentPrefs();
+        applySettingsUi();
+        updateHuntInstruction();
+    });
+    $('#easyModeSetting')?.addEventListener('change', (e) => {
+        state.easyMode = e.target.checked;
+        saveCurrentPrefs();
+        applySettingsUi();
+        renderQuestSummary();
+    });
+    $('#bigCardsSetting')?.addEventListener('change', (e) => {
+        state.bigCards = e.target.checked;
+        saveCurrentPrefs();
+        applySettingsUi();
+    });
+    $('#hapticsSetting')?.addEventListener('change', (e) => {
+        state.haptics = e.target.checked;
+        saveCurrentPrefs();
+        applySettingsUi();
+    });
+    $('#resetProgressBtn')?.addEventListener('click', resetProgress);
 
     // Prime speech voices on first interaction (mobile)
     document.body.addEventListener('pointerdown', function prime() {

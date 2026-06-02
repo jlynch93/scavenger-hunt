@@ -11,7 +11,7 @@
     <meta name="description" content="A colorful, randomized scavenger hunt game for little kids. Find things in the real world, earn stars and stickers!">
     <title>Critter Quest! Scavenger Hunt for Kids</title>
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=8">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" href="icon.svg">
@@ -26,7 +26,6 @@
     </div>
 
     <div id="app">
-        <!-- ============ HOME SCREEN ============ -->
         <section class="screen home-screen active" id="homeScreen">
             <div class="mascot-bubble">
                 <div class="mascot" id="homeMascot">🦊</div>
@@ -39,6 +38,14 @@
                 <div class="stat-pill"><span class="stat-emoji">🏆</span><span id="statHunts">0</span><span class="stat-label">hunts</span></div>
                 <div class="stat-pill"><span class="stat-emoji">⭐</span><span id="statStars">0</span><span class="stat-label">stars</span></div>
                 <div class="stat-pill"><span class="stat-emoji">🎟️</span><span id="statStickers">0</span><span class="stat-label">stickers</span></div>
+            </div>
+
+            <div class="quest-summary" id="questSummary" aria-live="polite">
+                <span class="quest-summary-emoji" id="questSummaryEmoji">🎲</span>
+                <div>
+                    <p class="eyebrow">Current Quest</p>
+                    <p class="quest-summary-text" id="questSummaryText">Surprise Mix • 8 things</p>
+                </div>
             </div>
 
             <div class="sticker-book" id="stickerBook">
@@ -72,7 +79,7 @@
 
             <div class="picker world-picker">
                 <p class="picker-label">Choose your adventure</p>
-                <div class="theme-grid" id="themeGrid"><!-- themes injected --></div>
+                <div class="theme-grid" id="themeGrid"></div>
             </div>
 
             <div class="picker compact-picker">
@@ -90,9 +97,9 @@
 
             <button class="sound-toggle" id="soundToggle" aria-label="Toggle sound">🔊</button>
             <button class="music-toggle" id="musicToggle" aria-label="Toggle music">🎵</button>
+            <button class="settings-toggle" id="settingsToggle" aria-label="Open settings">⚙️</button>
         </section>
 
-        <!-- ============ HUNT SCREEN ============ -->
         <section class="screen hunt-screen" id="huntScreen">
             <header class="hunt-top">
                 <button class="icon-btn" id="backBtn" aria-label="Go back">⬅️</button>
@@ -100,12 +107,11 @@
                     <span class="star-big">⭐</span>
                     <span id="starCount">0</span>
                 </div>
+                <div class="hunt-progress-pill" id="huntProgress">0 of 8</div>
                 <button class="icon-btn" id="huntSoundToggle" aria-label="Toggle sound">🔊</button>
             </header>
 
-            <div class="path" id="path" aria-live="polite">
-                <!-- stepping stones + mascot injected -->
-            </div>
+            <div class="path" id="path" aria-live="polite"></div>
 
             <div class="guide-panel" id="guidePanel">
                 <div class="guide-mascot" id="guideMascot">🦊</div>
@@ -118,14 +124,13 @@
 
             <p class="hunt-instruction" id="huntInstruction">Tap a picture when you find it!</p>
 
-            <div class="card-grid" id="cardGrid"><!-- cards injected --></div>
+            <div class="card-grid" id="cardGrid"></div>
 
-            <div class="twist-banner" id="twistBanner"><!-- twist announcement --></div>
+            <div class="twist-banner" id="twistBanner"></div>
         </section>
 
         <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
 
-        <!-- ============ WIN SCREEN ============ -->
         <section class="screen win-screen" id="winScreen">
             <div class="win-mascot" id="winMascot">🦊</div>
             <h2 class="win-title">You did it!</h2>
@@ -173,6 +178,7 @@
 
     <div class="onboard-layer" id="onboardLayer">
         <div class="onboard-card" role="dialog" aria-modal="true" aria-labelledby="onboardTitle">
+            <button class="onboard-skip" id="onboardSkip">Skip</button>
             <div class="onboard-mascot" id="onboardMascot">🦊</div>
             <h3 id="onboardTitle">Hi!</h3>
             <p id="onboardText">Let's go on a treasure hunt together!</p>
@@ -181,6 +187,30 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <div class="settings-layer" id="settingsLayer">
+        <div class="settings-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+            <button class="settings-close" id="settingsClose" aria-label="Close settings">×</button>
+            <h3 id="settingsTitle">Settings</h3>
+            <label class="setting-row">
+                <span>Photo proof buttons</span>
+                <input type="checkbox" id="photoProofSetting">
+            </label>
+            <label class="setting-row">
+                <span>Easy mode</span>
+                <input type="checkbox" id="easyModeSetting">
+            </label>
+            <label class="setting-row">
+                <span>Bigger hunt cards</span>
+                <input type="checkbox" id="bigCardsSetting">
+            </label>
+            <label class="setting-row">
+                <span>Haptics</span>
+                <input type="checkbox" id="hapticsSetting">
+            </label>
+            <button class="settings-danger" id="resetProgressBtn">Reset progress</button>
+        </div>
+    </div>
+
+    <script src="script.js?v=8"></script>
 </body>
 </html>
